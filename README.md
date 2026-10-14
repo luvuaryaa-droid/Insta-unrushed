@@ -28,7 +28,7 @@ Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), al
 
 ## "Do it anyway" reel with voice-over
 
-`output/do_it_anyway_voiceover.mp4` is the 11 s "Do it sad / angry / ... / anyway" sketchbook clip with a spoken voice-over reading each caption as it appears. The original video stream is copied unchanged. The voice is Kokoro neural TTS (voice `af_heart`), and every line ends before the next cut.
+`output/do_it_anyway_voiceover.mp4` (female voice `af_heart`) and the male-voice versions `output/do_it_anyway_voiceover_am_michael.mp4` (warm) and `output/do_it_anyway_voiceover_am_onyx.mp4` (deeper) are the 11 s "Do it sad / angry / ... / anyway" sketchbook clip with a spoken voice-over reading each caption as it appears. The original video stream is copied unchanged. The voice is Kokoro neural TTS (pick one with `--voice`), and every line ends before the next cut.
 
 ```
 pip install kokoro-onnx soundfile
