@@ -25,3 +25,15 @@ python3 make_video.py --preview 3 20  # stills at the given seconds -> output/pr
 The story, captions, colours and timings are all in `build()` in `make_video.py`.
 
 Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), all from Google Fonts.
+
+## "Do it anyway" reel with voice-over
+
+`output/do_it_anyway_voiceover.mp4` is the 11 s "Do it sad / angry / ... / anyway" sketchbook clip with a spoken voice-over reading each caption as it appears. The original video stream is copied unchanged. The voice is Kokoro neural TTS (voice `af_heart`), and every line ends before the next cut.
+
+```
+pip install kokoro-onnx soundfile
+# put kokoro-v1.0.onnx and voices-v1.0.bin (from the kokoro-onnx GitHub release model-files-v1.0) in models/
+python3 add_voiceover.py my_clip.mp4 output/do_it_anyway_voiceover.mp4 --models models
+```
+
+The lines, shot timings and speaking speeds are in `SCRIPT` at the top of `add_voiceover.py`.
