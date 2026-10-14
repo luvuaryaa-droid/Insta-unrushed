@@ -1,5 +1,12 @@
 # Insta-unrushed: weekly sketchbook tour
 
+There are two versions of this week's reel:
+
+1. **3D flip-book** (`make_flipbook.py` → `output/sketchbook_flipbook.mp4`, 59 s, 30 fps): an open sketchbook floats in a snowy night scene and flips through the pages, with big white hand-lettered captions. To float the book over your own footage instead of the drawn scene, run `python3 make_flipbook.py --bg my_clip.mp4`.
+2. **Papercut stop-motion** (`make_video.py` → `output/sketchbook_tour.mp4`), described below.
+
+## Papercut version
+
 A papercut stop-motion reel (1080×1920, 56 s) made from this week's sketchbook pages. It has burned-in captions and no voice-over.
 
 - `output/sketchbook_tour.mp4`: the finished reel. It has a silent audio track, so you can add music in Instagram.
