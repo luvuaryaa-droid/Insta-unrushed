@@ -33,4 +33,6 @@ Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), al
 ```
 python3 make_ads.py                        # all three
 python3 make_ads.py beginners --preview 5  # stills -> output/ads/preview/
+python3 make_voiceover.py                  # voice-over versions (needs kokoro-onnx + models/, see ADS.md)
+python3 make_carousels.py                  # carousels + single-image ads
 ```

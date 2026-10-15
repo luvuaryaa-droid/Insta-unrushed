@@ -1,6 +1,6 @@
 # Creator Studio: three video ads
 
-All three are 1080×1920 (9:16) papercut reels, rendered by `make_ads.py`. The phones in the ads play real footage from the sketchbook reels in `output/`. Each video has a silent audio track so you can add trending audio in-app.
+All three are 1080×1920 (9:16) papercut reels, rendered by `make_ads.py`. The phones in the ads play real footage from the sketchbook reels in `output/`. Each ad comes in two versions: `*_voiceover.mp4` has a spoken voice-over, and the plain `.mp4` has a silent track so you can add trending audio in-app. Carousels and single-image ads are listed at the end.
 
 ## The features every ad conveys
 
@@ -72,5 +72,33 @@ Post copy: *No editing experience needed. Add your photos, tell Claude the vibe 
 
 - Timing claims ("in minutes", "a few minutes", "voice-over in seconds") and "every platform" are marketing claims. Check they match Creator Studio before buying media.
 - The voice names (warm / deep / bright) are labels for the three voices used on the "Do it anyway" voice-over branch. Rename them in `scene_voice()` if the product uses different names.
-- The ads are silent. To give them their own voice-over, run `add_voiceover.py` from the voice-over branch with a script for each ad.
 - Copy, colours and timings are in `build_artists()`, `build_creators()` and `build_beginners()`. The shared feature scenes are the `scene_*()` functions. Re-render one ad with `python3 make_ads.py creators`, or write stills with `python3 make_ads.py creators --preview 2 9`.
+
+## Voice-over
+
+`make_voiceover.py` reads one line per scene, starting as the scene lands. The voices are Kokoro neural TTS. The full scripts are in `SCRIPTS` at the top of that file.
+
+| Ad | Voice | Opening line | Closing line |
+|---|---|---|---|
+| Artists | `af_heart` (warm, female) | "You paint." | "You paint. Claude handles the reels. Creator Studio." |
+| UGC creators | `am_michael` (warm, male, upbeat pace) | "Three hours of footage... for thirty seconds?" | "Film it. Claude ships it. Creator Studio." |
+| Beginners | `af_bella` (bright, friendly, female) | "Never edited a video? Good. You don't need to." | "Pro-looking reels. Zero editing skills. Creator Studio." |
+
+```
+pip install kokoro-onnx soundfile
+# put kokoro-v1.0.onnx and voices-v1.0.bin (kokoro-onnx GitHub release model-files-v1.0) in models/
+python3 make_voiceover.py            # all three
+python3 make_voiceover.py creators   # one ad
+```
+
+## Carousels and single images
+
+`make_carousels.py` builds still versions in the same papercut style.
+
+| Ad | Carousel (1080×1350, 4:5) | Single images |
+|---|---|---|
+| Artists | `carousel_artists/slide_1–7.jpg`: You paint → the chores, crossed out → 1. drop your art in → 2. pick your look → 3. your colours, your voice → the whole post, done → change anything, just ask + CTA | `image_artists_square.jpg` (1080×1080), `image_artists_story.jpg` (1080×1920) |
+| UGC creators | `carousel_creators/slide_1–6.jpg`: POV 3 hours of content → one upload, 3 hooks → two looks → no mic? no retakes → Claude handles the busywork → Film it. Claude ships it + CTA | `image_creators_square.jpg`, `image_creators_story.jpg` |
+| Beginners | `carousel_beginners/slide_1–6.jpg`: Never edited a video? Good. → step 1 → step 2 → step 3 (with the pro work ticked off) → the bits you'd forget → not quite right? just say so + CTA | `image_beginners_square.jpg`, `image_beginners_story.jpg` |
+
+Every carousel covers all nine features from the table above. The single images carry the hook, a one-line feature summary and the CTA.
