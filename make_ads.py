@@ -330,31 +330,69 @@ def scene_edit(t, z, seed, bg, wipe, request, title="change anything. just ask."
                    enter="drop", enter_dur=0.3))
 
 
+PRICE = "\u20b9699"   # rupee sign: only Caveat has the glyph, so prices are always set in Caveat
+TAGLINE = "Install once. Create forever."
+
+
+def price_badge(size, seed, color=TERRACOTTA, ink=PAPER_WHITE):
+    """A scalloped sale sticker: lifetime access / price."""
+    rng = np.random.default_rng(seed)
+    pts = []
+    for k in range(48):
+        a = 2 * math.pi * k / 48
+        r = size / 2 - 3 - (size * 0.05 if k % 2 else 0) - rng.uniform(0, 2)
+        pts.append((size / 2 + r * math.cos(a), size / 2 + r * math.sin(a)))
+    mask = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(mask).polygon(pts, fill=255)
+    im = Image.fromarray(mv.paper_texture(size, size, color, seed, 5)).convert("RGBA")
+    im.putalpha(mask)
+    d = ImageDraw.Draw(im)
+    for text, f, y in (("lifetime access", caveat(int(size * 0.13)), 0.25), (PRICE, caveat(int(size * 0.34)), 0.50),
+                       ("install once", caveat(int(size * 0.11)), 0.76)):
+        asc, desc = f.getmetrics()
+        d.text((size / 2 - f.getlength(text) / 2, size * y - (asc + desc) / 2), text, font=f, fill=ink)
+    return add_shadow(im, 6, 10, 9, 0.38)
+
+
+def logo_disc(size, seed):
+    logo = paper_circle(size, CREAM, seed)
+    d = ImageDraw.Draw(logo)
+    k = size / 330
+    d.ellipse((115 * k, 85 * k, 215 * k, 185 * k), fill=TERRACOTTA)
+    d.polygon([(150 * k, 112 * k), (150 * k, 158 * k), (192 * k, 135 * k)], fill=PAPER_WHITE)
+    f = caveat(int(54 * k))
+    d.text((165 * k - f.getlength("studio") / 2, 196 * k), "studio", font=f, fill=INK)
+    return add_shadow(logo)
+
+
 def end_card(t, z, bg, line1, line2, cta, seed, from_dir="down", accent=COBALT):
+    """Closing card, 7 s: hook lines, brand, the price sticker, tagline and CTA.
+    The voice-over says line1/line2 at t, the price at t + 2.5 and the tagline at t + 5.2."""
     background(t - 0.5, bg, seed, from_dir, z)
     rng = np.random.default_rng(seed)
+    dark = bg == CHARCOAL
     add(Sprite(text_strip(line1, marker(84), paper=PAPER_WHITE, seed=seed + 1, max_w=940), t + 0.05,
-               (540, 380), rot=-2, z=z + 2, enter="slide_left", enter_dur=0.4))
+               (540, 300), rot=-2, z=z + 2, enter="slide_left", enter_dur=0.4))
     add(Sprite(text_strip(line2, marker(72), paper=accent, ink=PAPER_WHITE, seed=seed + 2, max_w=940),
-               t + 0.45, (540, 580), rot=1.5, z=z + 3, enter="slide_right", enter_dur=0.4))
-    logo = paper_circle(330, CREAM, seed + 3)
-    d = ImageDraw.Draw(logo)
-    d.ellipse((115, 85, 215, 185), fill=TERRACOTTA)
-    d.polygon([(150, 112), (150, 158), (192, 135)], fill=PAPER_WHITE)
-    d.text((165 - caveat(54).getlength("studio") / 2, 196), "studio", font=caveat(54), fill=INK)
-    add(Sprite(add_shadow(logo), t + 1.0, (540, 980), rot=-4, z=z + 4, enter="pop", enter_dur=0.45))
-    add(Sprite(text_strip(BRAND, marker(96), paper=PAPER_WHITE if bg == CHARCOAL else INK,
-                          ink=INK if bg == CHARCOAL else PAPER_WHITE, seed=seed + 4, max_w=1000), t + 1.3,
-               (540, 1250), rot=-1.5, z=z + 5, enter="pop", enter_dur=0.45))
-    add(Sprite(text_strip("made with Claude", caveat(66), paper=CREAM, seed=seed + 5), t + 1.6,
-               (540, 1410), rot=1.5, z=z + 6, enter="pop", enter_dur=0.4))
-    add(Sprite(text_strip(cta, marker(72), paper=CHARTREUSE, seed=seed + 6), t + 2.1, (540, 1610), rot=-2,
+               t + 0.45, (540, 480), rot=1.5, z=z + 3, enter="slide_right", enter_dur=0.4))
+    add(Sprite(logo_disc(280, seed + 3), t + 1.0, (290, 830), rot=-4, z=z + 4, enter="pop", enter_dur=0.45))
+    add(Sprite(text_strip(BRAND, marker(96), paper=PAPER_WHITE if dark else INK, ink=INK if dark else PAPER_WHITE,
+                          seed=seed + 4, max_w=1000), t + 1.3, (540, 1120), rot=-1.5, z=z + 5, enter="pop",
+               enter_dur=0.45))
+    add(Sprite(text_strip("made with Claude", caveat(62), paper=CREAM, seed=seed + 5), t + 1.6, (540, 1255),
+               rot=1.5, z=z + 6, enter="pop", enter_dur=0.4))
+    add(Sprite(price_badge(390, seed + 7, color=CHARTREUSE if accent == TERRACOTTA else TERRACOTTA,
+                           ink=INK if accent == TERRACOTTA else PAPER_WHITE), t + 2.5, (770, 820), rot=8,
+               z=z + 9, enter="pop", enter_dur=0.5))
+    add(Sprite(text_strip(cta, marker(70), paper=CHARTREUSE, seed=seed + 6), t + 3.6, (540, 1660), rot=-2,
                z=z + 7, enter="slide_up", enter_dur=0.45))
-    for i, (sx, sy, sc, col) in enumerate(((150, 1000, 110, PAPER_WHITE), (930, 900, 90, TERRACOTTA),
-                                           (920, 1130, 70, accent), (160, 1720, 80, PAPER_WHITE))):
-        add(Sprite(star(sc, col, seed + 10 + i), t + 2.4 + i * 0.12, (sx, sy), rot=rng.uniform(-20, 20),
+    add(Sprite(text_strip(TAGLINE, marker(64), paper=PAPER_WHITE if not dark else CREAM, seed=seed + 8,
+                          max_w=1000), t + 5.2, (540, 1460), rot=1, z=z + 10, enter="pop", enter_dur=0.45))
+    for i, (sx, sy, sc, col) in enumerate(((110, 1010, 100, PAPER_WHITE), (980, 1060, 80, accent),
+                                           (120, 620, 70, accent), (150, 1790, 80, PAPER_WHITE))):
+        add(Sprite(star(sc, col, seed + 10 + i), t + 2.9 + i * 0.12, (sx, sy), rot=rng.uniform(-20, 20),
                    z=z + 8, enter="pop", enter_dur=0.3))
-    return t + 4.5
+    return t + 7.0
 
 
 # --------------------------------------------------------------------------- ad 1: artists

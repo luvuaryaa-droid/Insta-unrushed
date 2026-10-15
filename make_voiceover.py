@@ -38,7 +38,9 @@ SCRIPTS = {
         (21.0, "Want a voice-over? Pick a voice, and it reads your captions.", 1.05),
         (24.5, "You get the cover, the caption, and the hashtags too.", 1.0),
         (28.0, "Want changes? Just ask, and preview before the final render.", 1.05),
-        (32.2, "You paint. Claude handles the reels. Creator Studio.", 0.95),
+        (32.2, "You paint. Claude handles the reels. Creator Studio.", 1.0),
+        (34.7, "Lifetime access, just six ninety-nine rupees.", 1.0),
+        (37.4, "Install once. Create forever.", 0.95),
     ]),
     "creators": ("ad_ugc_creators.mp4", "am_michael", [
         (0.1, "Three hours of footage... for thirty seconds?", 1.1),
@@ -50,6 +52,8 @@ SCRIPTS = {
         (21.0, "Cover, caption, and hashtags. Ready to post.", 1.05),
         (24.5, "Notes? Just type them. Preview, then render.", 1.05),
         (28.7, "Film it. Claude ships it. Creator Studio.", 1.0),
+        (31.2, "Lifetime access, just six ninety-nine rupees.", 1.0),
+        (33.9, "Install once. Create forever.", 0.95),
     ]),
     "beginners": ("ad_beginners.mp4", "af_bella", [
         (0.1, "Never edited a video? Good. You don't need to.", 1.05),
@@ -61,7 +65,9 @@ SCRIPTS = {
         (21.0, "Plus the bits you'd forget: cover, caption, hashtags.", 1.0),
         (24.5, "Not quite right? Just say so.", 0.95),
         (28.0, "Skip the evening of tutorials. It takes a few minutes.", 1.0),
-        (32.2, "Pro-looking reels. Zero editing skills. Creator Studio.", 0.95),
+        (32.2, "Pro-looking reels. Zero editing skills.", 1.0),
+        (34.7, "Lifetime access, just six ninety-nine rupees.", 1.0),
+        (37.4, "Install once. Create forever.", 0.95),
     ]),
 }
 

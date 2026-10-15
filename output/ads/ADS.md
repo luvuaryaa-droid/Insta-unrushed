@@ -1,5 +1,7 @@
 # Creator Studio: three video ads
 
+**Offer: ₹699, lifetime access. Install once, create forever.** Every video, carousel and image ends on it.
+
 All three are 1080×1920 (9:16) papercut reels, rendered by `make_ads.py`. The phones in the ads play real footage from the sketchbook reels in `output/`. Each ad comes in two versions: `*_voiceover.mp4` has a spoken voice-over, and the plain `.mp4` has a silent track so you can add trending audio in-app. Carousels and single-image ads are listed at the end.
 
 ## The features every ad conveys
@@ -18,7 +20,7 @@ Each one is backed by something this repo already produces.
 | 8 | Full HD 9:16, ready for Reels, TikTok and Shorts | 9.5 s | 3 s, 17.5 s | 10 s |
 | 9 | Several versions from one upload | 14 s (two looks) | 6 s (3 hooks) | 14 s (two looks) |
 
-## 1. Artists: "You paint. Claude handles the reels." (`ad_artists_you_paint.mp4`, 36.5 s)
+## 1. Artists: "You paint. Claude handles the reels." (`ad_artists_you_paint.mp4`, 39 s)
 
 | Time | Scene |
 |---|---|
@@ -31,11 +33,11 @@ Each one is backed by something this repo already produces.
 | 21–24.5 s | **"want a voice-over?"** An animated waveform, voice picker (warm ✓ / deep / bright). "reads your captions, timed to every cut" |
 | 24.5–28 s | **"the whole post, done."** Cover frame + caption with hashtags typing out. Ticks: cover frame, caption + hashtags, music-ready. |
 | 28–32 s | **"change anything. just ask."** *"Make the captions bigger and slow down the ending."* Claude: *"Done. Preview stills before the final render:"* and three stills drop in. |
-| 32–36.5 s | End card: You paint. / Claude handles the reels. / CREATOR STUDIO, made with Claude / **Start your first reel >** |
+| 32–39 s | End card: You paint. / Claude handles the reels. / CREATOR STUDIO, made with Claude / **₹699 lifetime access** sticker / **Install once. Create forever.** / **Start your first reel >** |
 
-Post copy: *You make the art. Claude makes the reel: story, hand-lettered captions, papercut or 3D flip-book motion in your own colours, an optional voice-over, plus the cover, caption and hashtags. Want changes? Just ask. 🎨*
+Post copy: *You make the art. Claude makes the reel: story, hand-lettered captions, papercut or 3D flip-book motion in your own colours, an optional voice-over, plus the cover, caption and hashtags. Want changes? Just ask. 🎨 Lifetime access for ₹699. Install once, create forever.*
 
-## 2. UGC and content creators (`ad_ugc_creators.mp4`, 33 s)
+## 2. UGC and content creators (`ad_ugc_creators.mp4`, 35.5 s)
 
 | Time | Scene |
 |---|---|
@@ -47,11 +49,11 @@ Post copy: *You make the art. Claude makes the reel: story, hand-lettered captio
 | 17.5–21 s | "Claude handles the busywork:" story + pacing written for you, hand-lettered captions, colours pulled from your footage, full HD 9:16 for every platform. **"you stay on camera."** |
 | 21–24.5 s | **"post-ready, every time."** Cover, caption + hashtags, music-ready track. |
 | 24.5–28.5 s | **"notes? just type them."** *"Hook B, but make the first line punchier."* Then preview stills. |
-| 28.5–33 s | End card: Film it. / Claude ships it. / **Post more. Edit less >** |
+| 28.5–35.5 s | End card: Film it. / Claude ships it. / **₹699 lifetime access** sticker / **Install once. Create forever.** / **Post more. Edit less >** |
 
-Post copy: *Film once, post everywhere. Creator Studio turns your footage into multiple hook versions with hand-lettered captions, your colours and an optional voice-over, plus the cover, caption and hashtags. Notes? Just type them.*
+Post copy: *Film once, post everywhere. Creator Studio turns your footage into multiple hook versions with hand-lettered captions, your colours and an optional voice-over, plus the cover, caption and hashtags. Notes? Just type them. Lifetime access for ₹699. Install once, create forever.*
 
-## 3. Beginners (`ad_beginners.mp4`, 36.5 s)
+## 3. Beginners (`ad_beginners.mp4`, 39 s)
 
 | Time | Scene |
 |---|---|
@@ -64,9 +66,9 @@ Post copy: *Film once, post everywhere. Creator Studio turns your footage into m
 | 21–24.5 s | **"and the bits you'd forget:"** Cover, caption + hashtags, music-ready track. |
 | 24.5–28 s | **"not quite right? just say so."** *"Can you make the text bigger?"* Then preview stills. |
 | 28–31.5 s | ~~an evening of tutorials~~ → **a few minutes with Claude**. "and it looks like a pro made it." |
-| 32–36.5 s | End card: Pro-looking reels. / Zero editing skills. / **Make your first reel >** |
+| 32–39 s | End card: Pro-looking reels. / Zero editing skills. / **₹699 lifetime access** sticker / **Install once. Create forever.** / **Make your first reel >** |
 
-Post copy: *No editing experience needed. Add your photos, tell Claude the vibe in your own words, and get a finished reel: captions, motion, voice-over, cover and hashtags. Not quite right? Just say so.*
+Post copy: *No editing experience needed. Add your photos, tell Claude the vibe in your own words, and get a finished reel: captions, motion, voice-over, cover and hashtags. Not quite right? Just say so. Lifetime access for ₹699. Install once, create forever.*
 
 ## Before you run them
 
@@ -78,11 +80,11 @@ Post copy: *No editing experience needed. Add your photos, tell Claude the vibe 
 
 `make_voiceover.py` reads one line per scene, starting as the scene lands. The voices are Kokoro neural TTS. The full scripts are in `SCRIPTS` at the top of that file.
 
-| Ad | Voice | Opening line | Closing line |
+| Ad | Voice | Opening line | Closing lines |
 |---|---|---|---|
-| Artists | `af_heart` (warm, female) | "You paint." | "You paint. Claude handles the reels. Creator Studio." |
-| UGC creators | `am_michael` (warm, male, upbeat pace) | "Three hours of footage... for thirty seconds?" | "Film it. Claude ships it. Creator Studio." |
-| Beginners | `af_bella` (bright, friendly, female) | "Never edited a video? Good. You don't need to." | "Pro-looking reels. Zero editing skills. Creator Studio." |
+| Artists | `af_heart` (warm, female) | "You paint." | "You paint. Claude handles the reels. Creator Studio." / "Lifetime access, just six ninety-nine rupees." / "Install once. Create forever." |
+| UGC creators | `am_michael` (warm, male, upbeat pace) | "Three hours of footage... for thirty seconds?" | "Film it. Claude ships it. Creator Studio." / "Lifetime access, just six ninety-nine rupees." / "Install once. Create forever." |
+| Beginners | `af_bella` (bright, friendly, female) | "Never edited a video? Good. You don't need to." | "Pro-looking reels. Zero editing skills." / "Lifetime access, just six ninety-nine rupees." / "Install once. Create forever." |
 
 ```
 pip install kokoro-onnx soundfile
@@ -97,8 +99,10 @@ python3 make_voiceover.py creators   # one ad
 
 | Ad | Carousel (1080×1350, 4:5) | Single images |
 |---|---|---|
-| Artists | `carousel_artists/slide_1–7.jpg`: You paint → the chores, crossed out → 1. drop your art in → 2. pick your look → 3. your colours, your voice → the whole post, done → change anything, just ask + CTA | `image_artists_square.jpg` (1080×1080), `image_artists_story.jpg` (1080×1920) |
-| UGC creators | `carousel_creators/slide_1–6.jpg`: POV 3 hours of content → one upload, 3 hooks → two looks → no mic? no retakes → Claude handles the busywork → Film it. Claude ships it + CTA | `image_creators_square.jpg`, `image_creators_story.jpg` |
-| Beginners | `carousel_beginners/slide_1–6.jpg`: Never edited a video? Good. → step 1 → step 2 → step 3 (with the pro work ticked off) → the bits you'd forget → not quite right? just say so + CTA | `image_beginners_square.jpg`, `image_beginners_story.jpg` |
+| Artists | `carousel_artists/slide_1–8.jpg`: You paint → the chores, crossed out → 1. drop your art in → 2. pick your look → 3. your colours, your voice → the whole post, done → change anything, just ask → **Lifetime access ₹699 / Install once. Create forever.** + CTA | `image_artists_square.jpg` (1080×1080), `image_artists_story.jpg` (1080×1920) |
+| UGC creators | `carousel_creators/slide_1–7.jpg`: POV 3 hours of content → one upload, 3 hooks → two looks → no mic? no retakes → Claude handles the busywork → Film it. Claude ships it → **Lifetime access ₹699 / Install once. Create forever.** + CTA | `image_creators_square.jpg`, `image_creators_story.jpg` |
+| Beginners | `carousel_beginners/slide_1–7.jpg`: Never edited a video? Good. → step 1 → step 2 → step 3 (with the pro work ticked off) → the bits you'd forget → not quite right? just say so → **Lifetime access ₹699 / Install once. Create forever.** + CTA | `image_beginners_square.jpg`, `image_beginners_story.jpg` |
 
-Every carousel covers all nine features from the table above. The single images carry the hook, a one-line feature summary and the CTA.
+Every carousel covers all nine features from the table above. The single images carry the hook, a one-line feature summary, the ₹699 lifetime-access sticker, the tagline and the CTA.
+
+The ₹ sign is set in Caveat (the handwriting font), because Permanent Marker has no ₹ glyph. Any marker-style text with a price should say "Rs. 699" instead. The price and tagline live in `PRICE` and `TAGLINE` in `make_ads.py`.

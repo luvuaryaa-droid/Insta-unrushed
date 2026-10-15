@@ -80,6 +80,22 @@ def brand_block(s, y, bg_dark=False):
     s.strip("made with Claude", y + 320, caveat(58), paper=CREAM, rot=1.5, seed=79)
 
 
+def price_slide(bg, seed, k, n, cta, accent=COBALT):
+    """Closing slide: lifetime access at the price, the tagline and the CTA."""
+    s = Slide(bg, seed)
+    dark = sum(bg) < 300
+    s.strip("Lifetime access.", 150, marker(92), rot=-2, seed=seed + 1)
+    s.put(ma.price_badge(520, seed + 2, color=CHARTREUSE if accent == TERRACOTTA else TERRACOTTA,
+                         ink=INK if accent == TERRACOTTA else PAPER_WHITE), 540, 530, 6)
+    s.strip(ma.TAGLINE, 870, marker(68), paper=accent, ink=PAPER_WHITE, rot=1.5, seed=seed + 3, max_w=1000)
+    s.strip(ma.BRAND + " · made with Claude", 1010, caveat(56), paper=PAPER_WHITE if dark else CREAM,
+            rot=-1, seed=seed + 4)
+    s.strip(cta, 1170, marker(68), paper=CHARTREUSE, rot=-2, seed=seed + 5)
+    s.stars(((150, 380, 100, PAPER_WHITE), (930, 330, 80, accent), (940, 720, 90, PAPER_WHITE)), seed + 6)
+    s.counter(k, n, swipe=False)
+    return s
+
+
 def phone_still(clip_name, at, w):
     return ma.phone([ma.footage(clip_name, at, 0.25)[0]], w=w)[0]
 
@@ -120,7 +136,7 @@ def save(img, path):
 # --------------------------------------------------------------------------- artists
 
 def artists(A):
-    n, slides = 7, []
+    n, slides = 8, []
 
     s = Slide(MUSTARD, 1)
     for i, (name, x, y, r) in enumerate((("flowers_vase", 260, 300, -8), ("portrait_bob", 820, 330, 6),
@@ -185,15 +201,16 @@ def artists(A):
     s.strip("change anything. just ask.", 420, marker(64), paper=PAPER_WHITE, rot=1.5, seed=101)
     brand_block(s, 680)
     s.strip("Start your first reel >", 1230, marker(66), paper=CHARTREUSE, rot=-2, seed=102)
-    s.counter(7, n, swipe=False)
+    s.counter(7, n)
     slides.append(s)
+    slides.append(price_slide(MUSTARD, 105, 8, n, "Start your first reel >"))
     return slides
 
 
 # --------------------------------------------------------------------------- UGC creators
 
 def creators(A):
-    n, slides = 6, []
+    n, slides = 7, []
     rng = np.random.default_rng(9)
 
     s = Slide(CHARCOAL, 11)
@@ -248,8 +265,9 @@ def creators(A):
     brand_block(s, 560, bg_dark=True)
     s.strip("Post more. Edit less >", 1130, marker(68), paper=CHARTREUSE, rot=-2, seed=182)
     s.stars(((140, 600, 100, PAPER_WHITE), (940, 520, 80, TERRACOTTA), (930, 760, 70, CHARTREUSE)), 183)
-    s.counter(6, n, swipe=False)
+    s.counter(6, n)
     slides.append(s)
+    slides.append(price_slide(CHARCOAL, 185, 7, n, "Post more. Edit less >", accent=TERRACOTTA))
     return slides
 
 
@@ -264,7 +282,7 @@ def step_head(s, k, title, seed):
 
 
 def beginners(A):
-    n, slides = 6, []
+    n, slides = 7, []
 
     s = Slide(DUSTY_BLUE, 21)
     s.strip("Never edited a video?", 430, marker(84), rot=-2, seed=210)
@@ -314,8 +332,9 @@ def beginners(A):
     s.strip("not quite right? just say so.", 370, marker(58), paper=PAPER_WHITE, rot=1.5, seed=271)
     brand_block(s, 640)
     s.strip("Make your first reel >", 1210, marker(66), paper=CHARTREUSE, rot=-2, seed=272)
-    s.counter(6, n, swipe=False)
+    s.counter(6, n)
     slides.append(s)
+    slides.append(price_slide(PINK, 275, 7, n, "Make your first reel >", accent=TERRACOTTA))
     return slides
 
 
@@ -328,7 +347,7 @@ def single(A, ad, w, h):
     if ad == "artists":
         art = [("flowers_vase", 0.24, 0.17, -8), ("portrait_bob", 0.76, 0.18, 6), ("car_front", 0.24, 0.80, 5),
                ("blue_flowers", 0.76, 0.80, -6)]
-        for i, (name, fx, fy, r) in enumerate(art if tall else art[:2]):
+        for i, (name, fx, fy, r) in enumerate(art if tall else art[:1]):
             s.put(cutout(A[name], 330 if not tall else 420, 330 if not tall else 420, 310 + i, tape="top"),
                   fx * w, fy * h, r)
         cy += 0 if tall else 60
@@ -336,6 +355,7 @@ def single(A, ad, w, h):
         s.strip("Claude handles the reels.", cy + 60, marker(62), paper=COBALT, ink=PAPER_WHITE, rot=2, seed=321)
         s.strip("story · captions · motion · voice-over · hashtags", cy + 175, caveat(46), paper=CREAM,
                 seed=322, max_w=w - 100)
+        badge = (0.5 * w, 640, 290, 4) if tall else (0.75 * w, 0.18 * h, 300, 8)
         cta = "Start your first reel >"
     elif ad == "creators":
         s.strip("Film it.", h * 0.12, marker(100), rot=-2, seed=330)
@@ -347,8 +367,9 @@ def single(A, ad, w, h):
         for i, (im, cap, lab) in enumerate(sets):
             s.put(ma.phone([im], [cap], w=pw, label=f"hook {lab}")[0], w / 2 + (i - 1) * (pw + 30),
                   cy + (10 if not tall else 0), (-5, 0, 5)[i])
-        s.strip("3 hooks · captions · voice-over · one upload", h * (0.80 if tall else 0.745), caveat(48), paper=CREAM, seed=332,
+        s.strip("3 hooks · captions · voice-over · one upload", h * (0.765 if tall else 0.745), caveat(48), paper=CREAM, seed=332,
                 max_w=w - 100)
+        badge = (0.82 * w, 545, 290, 8) if tall else (0.87 * w, 0.13 * h, 250, 8)
         cta = "Post more. Edit less >"
     else:
         s.strip("Never edited a video?", h * 0.14, marker(76), rot=-2, seed=340)
@@ -358,10 +379,14 @@ def single(A, ad, w, h):
         s.ticks(["add photos", "describe the vibe", "post it"], w * 0.68, cy + (0 if not tall else 20),
                 120 if not tall else 150, size=54,
                 dots=(CHARTREUSE, PAPER_WHITE, PINK), seed=342)
+        badge = (0.80 * w, 0.30 * h, 300, 8) if tall else (0.15 * w, 0.31 * h, 250, -6)
         cta = "Make your first reel >"
+    bx, by, bs, br = badge
+    accent = TERRACOTTA if ad != "creators" else CHARTREUSE
+    s.put(ma.price_badge(bs, 360, color=accent, ink=PAPER_WHITE if ad != "creators" else INK), bx, by, br)
     y = h - (175 if not tall else 300)
     s.strip(cta, y, marker(60), paper=CHARTREUSE, rot=-2, seed=350)
-    s.strip("Creator Studio · made with Claude", y + (95 if not tall else 120), caveat(44),
+    s.strip("Creator Studio · " + ma.TAGLINE, y + (95 if not tall else 120), caveat(44),
             paper=PAPER_WHITE if ad == "creators" else CREAM, rot=1, seed=351)
     return s.finish()
 
