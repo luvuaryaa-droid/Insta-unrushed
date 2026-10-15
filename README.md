@@ -25,3 +25,12 @@ python3 make_video.py --preview 3 20  # stills at the given seconds -> output/pr
 The story, captions, colours and timings are all in `build()` in `make_video.py`.
 
 Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), all from Google Fonts.
+
+## Creator Studio ads
+
+`make_ads.py` renders three 9:16 ads for Creator Studio into `output/ads/`: one for artists, one for UGC and content creators, and one for beginners. Scripts and post copy are in `output/ads/ADS.md`.
+
+```
+python3 make_ads.py                        # all three
+python3 make_ads.py beginners --preview 5  # stills -> output/ads/preview/
+```
