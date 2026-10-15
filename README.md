@@ -28,7 +28,7 @@ Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), al
 
 ## Creator Studio ads
 
-`make_ads.py` renders three 9:16 ads for Creator Studio into `output/ads/`: one for artists, one for UGC and content creators, and one for beginners. Scripts and post copy are in `output/ads/ADS.md`.
+`make_ads.py` renders three 9:16 ads for Creator Studio into `output/ads/`: one for artists, one for UGC and content creators, and one for beginners. Each one walks through the full feature set, and the phones in the ads play footage from the sketchbook reels above. Scripts, a feature checklist and post copy are in `output/ads/ADS.md`.
 
 ```
 python3 make_ads.py                        # all three
