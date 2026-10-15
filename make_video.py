@@ -415,12 +415,13 @@ def caption(text, t, y, z, size=84, seed=0, rot=None, paper=PAPER_WHITE, ink=INK
 
 
 def build():
+    """Every caption pops in on the word it matches in audio/voiceover.m4a (times in seconds)."""
     arts = {n.split(".")[0]: load_art(n) for n in sorted(os.listdir(ART))}
     cat = Image.open(os.path.join(ART, "cat_neon.gif"))
     cat_frames_raw = [f.convert("RGB") for f in ImageSequence.Iterator(cat)]
     rng = np.random.default_rng(7)
 
-    # ---------------- 0: title (0 - 4.5)
+    # ---------------- 0: "Hello, and let me walk you through my sketches of the week." (0.2 - 3.8)
     z = 0
     background(0, MUSTARD, 11, None, z)
     for i, (col, yy, seed) in enumerate(((SAGE, 1500, 21), (TERRACOTTA, 1640, 22), (CREAM, 1780, 23))):
@@ -432,50 +433,52 @@ def build():
     add(Sprite(cutout(arts["cat_neon"], 400, 400, 32, tape="top", tape_color=(210, 230, 120)), 0.25,
                (830, 470), rot=7, z=z + 6, enter="drop", enter_dur=0.4))
     add(Sprite(cutout(arts["clock_collage"], 330, 330, 33, tape="top", tape_color=(230, 170, 190)), 0.5,
-               (300, 1400), rot=-5, z=z + 7, enter="drop", enter_dur=0.4))
-    add(Sprite(text_strip("SKETCHBOOK", marker(118), seed=41, sides="lr"), 0.9, (540, 860), rot=-3,
+               (820, 1420), rot=5, z=z + 7, enter="drop", enter_dur=0.4))
+    caption("hello!", 0.15, 230, z + 9, size=110, seed=40, rot=-4, x=540)
+    add(Sprite(text_strip("SKETCHBOOK", marker(118), seed=41, sides="lr"), 0.7, (540, 860), rot=-3,
                z=z + 10, enter="slide_left", enter_dur=0.45))
-    add(Sprite(text_strip("TOUR", marker(118), paper=COBALT, ink=PAPER_WHITE, seed=42), 1.25, (660, 1015),
+    add(Sprite(text_strip("TOUR", marker(118), paper=COBALT, ink=PAPER_WHITE, seed=42), 1.0, (660, 1015),
                rot=2.5, z=z + 11, enter="slide_right", enter_dur=0.45))
-    add(Sprite(text_strip("a week of experiments", caveat(70), paper=CREAM, seed=43), 1.7, (470, 1160),
-               rot=-1.5, z=z + 12, enter="pop", enter_dur=0.4))
+    caption("let me walk you through\nmy sketches of the week", 1.2, 1200, z + 12, size=66, seed=43,
+            paper=CREAM, rot=-1.5, max_w=820)
     for i, (sx, sy, sc, col) in enumerate(((150, 1010, 110, PAPER_WHITE), (930, 790, 90, TERRACOTTA),
-                                           (915, 1180, 70, COBALT))):
+                                           (170, 1400, 70, COBALT))):
         add(Sprite(star(sc, col, 50 + i), 2.0 + i * 0.15, (sx, sy), rot=rng.uniform(-20, 20), z=z + 13,
                    enter="pop", enter_dur=0.35))
 
-    # ---------------- 1: happier / in the zone (4.5 - 9.5)
-    t = 4.5
+    # ---------------- 1: happier / in the zone (4.35 - 9.7)
+    t = 4.35
     z = 100
-    background(t - 0.5, SAGE, 101, "right", z)
-    add(Sprite(cutout(arts["portrait_bob"], 690, 760, 111, tape="top"), t + 0.1, (510, 760), rot=-3,
+    background(t - 0.55, SAGE, 101, "right", z)
+    add(Sprite(cutout(arts["portrait_bob"], 690, 760, 111, tape="top"), t + 0.05, (510, 760), rot=-3,
                z=z + 2, enter="drop"))
     add(Sprite(cutout(arts["flowers_vase"], 330, 330, 112, tape="corners", tape_color=(240, 200, 140)),
-               t + 0.5, (850, 1120), rot=8, z=z + 3, enter="drop"))
-    caption("creating makes me happier.", t + 0.9, 1390, z + 10, size=92, seed=113)
-    caption("and once I'm in the zone...\nit gets easier.", t + 2.4, 1570, z + 11, size=72, seed=114,
+               t + 0.9, (850, 1120), rot=8, z=z + 3, enter="drop"))
+    caption("creating makes me happier.", t, 1390, z + 10, size=92, seed=113)
+    caption("and it becomes easier\nonce you're in the zone.", 6.68, 1570, z + 11, size=72, seed=114,
             paper=CREAM, max_w=800)
 
-    # ---------------- 2: like the gym / excuses (9.5 - 15)
-    t = 9.5
+    # ---------------- 2: like the gym / excuses (9.95 - 14.4)
+    t = 9.95
     z = 200
-    background(t - 0.5, PINK, 201, "down", z)
-    caption("it's a lot like the gym.", t + 0.1, 330, z + 10, size=96, seed=211)
-    caption("you avoid it. you've got excuses.", t + 0.8, 1520, z + 10, size=76, seed=212)
+    background(t - 0.55, PINK, 201, "down", z)
+    caption("it's a lot like the gym.", t, 330, z + 10, size=96, seed=211)
+    caption("you avoid it. you've got excuses.", 11.39, 1520, z + 10, size=76, seed=212)
     excuses = [("too tired", 330, 700, -7), ("no time", 760, 640, 6), ("tomorrow!", 380, 980, 4),
                ("not inspired", 740, 1010, -5), ("it won't be good", 540, 1260, -2)]
     for i, (txt, ex, ey, er) in enumerate(excuses):
         im = text_strip(txt, typewriter(56), paper=PAPER_WHITE if i % 2 else CREAM, seed=220 + i,
                         sides="tblr", max_w=600)
-        add(Sprite(im, t + 1.2 + i * 0.35, (ex, ey), rot=er, z=z + 3 + i, enter="pop", enter_dur=0.35))
+        add(Sprite(im, 11.8 + i * 0.25, (ex, ey), rot=er, z=z + 3 + i, enter="pop", enter_dur=0.3))
         sw = int(im.width * 0.85)
-        add(Sprite(strike(sw, 230 + i), t + 3.3 + i * 0.3, (ex, ey), rot=er + rng.uniform(-4, 4),
-                   z=z + 8, enter="none", enter_dur=0, reveal=(t + 3.3 + i * 0.3, 0.25), boil=0.5))
+        st = 13.0 + i * 0.18
+        add(Sprite(strike(sw, 230 + i), st, (ex, ey), rot=er + rng.uniform(-4, 4),
+                   z=z + 8, enter="none", enter_dur=0, reveal=(st, 0.2), boil=0.5))
 
-    # ---------------- 3: day counter / hooked (15 - 21)
-    t = 15.0
+    # ---------------- 3: day counter / hooked (14.5 - 20.1)
+    t = 14.5
     z = 300
-    background(t - 0.5, DUSTY_BLUE, 301, "left", z)
+    background(t - 0.55, DUSTY_BLUE, 301, "left", z)
     cols, rows, box, gap = 5, 2, 164, 14
     cw, ch = cols * box + (cols + 1) * gap + 30, rows * (box + 46) + gap + 70
     card = torn_sheet(cw, ch, CREAM, 302, sides="", amp=0, grain=4)
@@ -492,46 +495,47 @@ def build():
     card = add_shadow(card)
     pad = (card.width - cw) / 2
     card_pos = (540, 940)
-    add(Sprite(card, t + 0.1, card_pos, z=z + 2, enter="drop", boil=0.4))
+    add(Sprite(card, t + 0.05, card_pos, z=z + 2, enter="drop", boil=0.4))
     thumbs = ["portrait_bob", "flowers_vase", "camera_polaroid", "car_awning", "car_front",
               "flowers_mosaic", "portraits_stripes", "cat_neon", "clock_collage", "blue_flowers"]
-    times = [1.2, 2.0, 2.6, 2.85, 3.05, 3.2, 3.35, 3.5, 3.65, 3.95]
+    # "one day" 15.3, "two days" 16.3, "ten days" 17.3
+    times = [15.4, 16.4, 17.3, 17.42, 17.54, 17.66, 17.78, 17.9, 18.02, 18.14]
     for i, (name, tt) in enumerate(zip(thumbs, times)):
         th = square_thumb(arts[name], box - 14)
         th = add_shadow(th.convert("RGBA"), 3, 4, 3, 0.3)
         cx = card_pos[0] - card.width / 2 + pad + centers[i][0]
         cy = card_pos[1] - card.height / 2 + pad + centers[i][1]
-        add(Sprite(th, t + tt, (cx, cy), rot=rng.uniform(-4, 4), z=z + 3, enter="pop", enter_dur=0.3,
+        add(Sprite(th, tt, (cx, cy), rot=rng.uniform(-4, 4), z=z + 3, enter="pop", enter_dur=0.25,
                    boil=0.6))
-    caption("then one day...", t + 0.7, 360, z + 10, size=96, seed=311, t1=t + 2.0, leave="shrink",
-            leave_dur=0.2)
-    caption("2 days...", t + 2.0, 360, z + 11, size=96, seed=312, t1=t + 3.0, leave="shrink",
-            leave_dur=0.2)
-    caption("10 days...", t + 3.0, 360, z + 12, size=96, seed=313)
-    add(Sprite(text_strip("...and you're hooked.", marker(84), paper=MUSTARD, seed=314), t + 4.3,
-               (540, 1480), rot=-2.5, z=z + 13, enter="pop", enter_dur=0.45))
+    caption("but one day...", 14.55, 360, z + 10, size=96, seed=311, t1=16.32, leave="shrink",
+            leave_dur=0.15)
+    caption("2 days...", 16.32, 360, z + 11, size=96, seed=312, t1=17.31, leave="shrink",
+            leave_dur=0.15)
+    caption("10 days...", 17.31, 360, z + 12, size=96, seed=313)
+    add(Sprite(text_strip("...and you're hooked.", marker(84), paper=MUSTARD, seed=314), 18.3,
+               (540, 1480), rot=-2.5, z=z + 13, enter="pop", enter_dur=0.4))
 
-    # ---------------- 4: life revolves around it (21 - 26.5)
-    t = 21.0
+    # ---------------- 4: life revolves around it (20.1 - 23.5)
+    t = 20.1
     z = 400
-    background(t - 0.5, TERRACOTTA, 401, "up", z)
+    background(t - 0.55, TERRACOTTA, 401, "up", z)
     cx, cy = 540, 960
     center = paper_circle(470, CREAM, 402)
     center = add_shadow(center)
-    add(Sprite(center, t + 0.1, (cx, cy), z=z + 1, enter="pop", boil=0.3))
-    add(Sprite(cutout(arts["spread_cars"], 400, 260, 403), t + 0.3, (cx, cy - 10), rot=-4, z=z + 2,
+    add(Sprite(center, t, (cx, cy), z=z + 1, enter="pop", boil=0.3))
+    add(Sprite(cutout(arts["spread_cars"], 400, 260, 403), t + 0.2, (cx, cy - 10), rot=-4, z=z + 2,
                enter="drop"))
     orbiters = ["portrait_bob", "cat_neon", "toast_collage", "car_front", "blue_flowers", "flowers_vase",
                 "camera_polaroid", "clock_collage"]
     n = len(orbiters)
-    t_orb = t + 0.6
+    t_orb = 21.3   # starts orbiting on "revolve"
 
     def make_path(k):
         base = 2 * math.pi * k / n
 
         def path(tt):
             grow = ease_out(clamp((tt - t_orb) / 0.8))
-            ang = base + 0.55 * (tt - t_orb)
+            ang = base + 0.9 * (tt - t_orb)
             return (cx + 400 * grow * math.cos(ang), cy + 560 * grow * math.sin(ang),
                     12 * math.sin(ang * 2 + k), 0.45 + 0.55 * grow)
         return path
@@ -539,69 +543,73 @@ def build():
     for k, name in enumerate(orbiters):
         add(Sprite(cutout(arts[name], 230, 230, 410 + k, border=10), t_orb, (cx, cy), z=z + 3,
                    enter="none", enter_dur=0, path=make_path(k), boil=0.6))
-    caption("you make your whole life", t + 1.2, 300, z + 10, size=86, seed=421)
+    caption("and you make your whole life", t, 300, z + 10, size=86, seed=421)
     add(Sprite(text_strip("revolve around it.", marker(82), paper=COBALT, ink=PAPER_WHITE, seed=422),
-               t + 2.0, (540, 1640), rot=2, z=z + 11, enter="pop", enter_dur=0.45))
+               21.4, (540, 1640), rot=2, z=z + 11, enter="pop", enter_dur=0.4))
 
-    # ---------------- 5: this past week = experiments (26.5 - 29.5)
-    t = 26.5
+    # ---------------- 5: this past week = experiments (23.55 - 27.4)
+    t = 23.55
     z = 500
-    background(t - 0.5, CREAM, 501, "right", z)
-    caption("this past week?", t + 0.1, 760, z + 2, size=100, seed=511, paper=PAPER_WHITE)
-    add(Sprite(text_strip("a LOT of experiments", marker(70), paper=TERRACOTTA, ink=PAPER_WHITE, seed=512),
-               t + 0.8, (540, 950), rot=-2, z=z + 3, enter="slide_left", enter_dur=0.4))
-    add(Sprite(text_strip("ink · markers · neon · collage", caveat(70), paper=MUSTARD, seed=513), t + 1.4,
-               (540, 1110), rot=1.5, z=z + 4, enter="pop"))
+    background(t - 0.55, CREAM, 501, "right", z)
+    caption("this past week,", t, 800, z + 2, size=100, seed=511, paper=PAPER_WHITE)
+    add(Sprite(text_strip("I've made a LOT of experiments", marker(66), paper=TERRACOTTA, ink=PAPER_WHITE,
+                          seed=512, max_w=900), 24.8, (540, 1000), rot=-2, z=z + 3, enter="slide_left",
+               enter_dur=0.4))
     for i, (sx, sy, sc, col) in enumerate(((200, 560, 120, MUSTARD), (880, 640, 90, COBALT),
                                            (870, 1300, 110, SAGE), (230, 1280, 80, TERRACOTTA))):
-        add(Sprite(star(sc, col, 520 + i), t + 1.6 + i * 0.12, (sx, sy), rot=rng.uniform(-20, 20),
+        add(Sprite(star(sc, col, 520 + i), 25.4 + i * 0.12, (sx, sy), rot=rng.uniform(-20, 20),
                    z=z + 5, enter="pop", enter_dur=0.3))
 
-    # ---------------- 6..10: categories (29.5 - 49.5)
+    # ---------------- 6..10: "ink, neon, collages, patterns, whatnot." -- one quick cut per word
     cats = [
-        ("INK", MUSTARD, INK, PAPER_WHITE, "left",
-         [("portraits_stripes", 560, 740, (360, 830), -4), ("camera_polaroid", 400, 470, (770, 1270), 6)],
-         "pen + ink, lots of hatching"),
-        ("MARKERS", SAGE, PAPER_WHITE, INK, "right",
-         [("car_awning", 640, 640, (430, 720), -5), ("car_front", 480, 520, (720, 1240), 5)],
-         "vintage cars, black + grey"),
-        ("NEON", CHARCOAL, INK, CHARTREUSE, "down",
-         [("cat_neon", 760, 760, (540, 900), -3)],
-         "a little neon never hurt"),
-        ("COLLAGE", PINK, PAPER_WHITE, COBALT, "left",
-         [("clock_collage", 560, 560, (400, 720), -6), ("toast_collage", 520, 520, (700, 1230), 5)],
-         "paper scraps + paint"),
-        ("PATTERN PLAY", DUSTY_BLUE, PAPER_WHITE, COBALT, "right",
+        (27.55, "INK", MUSTARD, INK, PAPER_WHITE, "left",
+         [("portraits_stripes", 560, 740, (360, 830), -4), ("camera_polaroid", 400, 470, (770, 1270), 6)]),
+        (28.25, "NEON", CHARCOAL, INK, CHARTREUSE, "down",
+         [("cat_neon", 760, 760, (540, 900), -3)]),
+        (29.52, "COLLAGES", PINK, PAPER_WHITE, COBALT, "left",
+         [("clock_collage", 560, 560, (400, 720), -6), ("toast_collage", 520, 520, (700, 1230), 5)]),
+        (30.65, "PATTERNS", DUSTY_BLUE, PAPER_WHITE, COBALT, "right",
          [("blue_flowers_spread", 960, 560, (540, 690), -2), ("flowers_mosaic", 470, 470, (380, 1210), 4),
-          ("flowers_vase", 400, 400, (790, 1290), -6)],
-         "dots, dashes + mosaics"),
+          ("flowers_vase", 400, 400, (790, 1290), -6)]),
+        (32.05, "+ WHATNOT", SAGE, PAPER_WHITE, INK, "up",
+         [("car_awning", 640, 640, (430, 760), -5), ("car_front", 480, 520, (720, 1260), 5)]),
     ]
-    t = 29.5
-    for ci, (label, bg, tag_ink, tag_paper, wipe, pieces, note) in enumerate(cats):
+    for ci, (t, label, bg, tag_ink, tag_paper, wipe, pieces) in enumerate(cats):
         z = 600 + ci * 100
-        dur = 4.0
-        background(t - 0.5, bg, 600 + ci, wipe, z)
+        background(t - 0.3, bg, 600 + ci, wipe, z, dur=0.3)
         tag = text_strip(label, marker(104), paper=tag_paper, ink=tag_ink if label != "NEON" else INK,
                          seed=610 + ci)
-        add(Sprite(tag, t + 0.05, (540, 260), rot=rng.uniform(-3, 3), z=z + 20, enter="slide_up",
-                   enter_dur=0.4))
+        add(Sprite(tag, t, (540, 260), rot=rng.uniform(-3, 3), z=z + 20, enter="pop", enter_dur=0.3))
         for pi, (name, mw, mh, pos, rot) in enumerate(pieces):
             if name == "cat_neon":
                 frames = [cutout(f, mw, mh, 650, tape="top", tape_color=(210, 230, 120))
                           for f in cat_frames_raw]
-                add(Sprite(frames[0], t + 0.35, pos, rot=rot, z=z + 2, enter="drop", frames=frames,
-                           frame_dur=0.17))
+                add(Sprite(frames[0], t + 0.05, pos, rot=rot, z=z + 2, enter="drop", enter_dur=0.3,
+                           frames=frames, frame_dur=0.17))
             else:
                 add(Sprite(cutout(arts[name], mw, mh, 640 + ci * 10 + pi,
                                   tape="top" if pi % 2 == 0 else "corners"),
-                           t + 0.35 + pi * 0.45, pos, rot=rot, z=z + 2 + pi, enter="drop"))
-        caption(note, t + 1.4, 1600, z + 21, size=70, seed=660 + ci,
-                paper=CREAM if bg != CREAM else PAPER_WHITE)
-        t += dur
+                           t - 0.05 + pi * 0.15, pos, rot=rot, z=z + 2 + pi, enter="drop", enter_dur=0.3))
 
-    # ---------------- 11: outro (49.5 - 56)
+    # ---------------- 11: "Trying something new is what keeps creativity alive." (33.22 - 37.3)
+    t = 33.22
+    z = 1100
+    background(t - 0.5, CREAM, 1101, "left", z, dur=0.5)
+    add(Sprite(cutout(arts["spread_camera_can"], 920, 700, 1102, tape="corners"), t, (540, 880), rot=-3,
+               z=z + 2, enter="drop"))
+    caption("trying something new", t, 330, z + 10, size=100, seed=1111)
+    add(Sprite(text_strip("is what keeps creativity alive.", marker(72), paper=COBALT, ink=PAPER_WHITE,
+                          seed=1112, max_w=820), 34.4, (540, 1480), rot=-2, z=z + 11, enter="slide_up",
+               enter_dur=0.4))
+    for i, (sx, sy, sc, col) in enumerate(((150, 560, 100, MUSTARD), (940, 1160, 120, TERRACOTTA),
+                                           (170, 1240, 80, SAGE))):
+        add(Sprite(star(sc, col, 1120 + i), 35.6 + i * 0.12, (sx, sy), rot=rng.uniform(-20, 20),
+                   z=z + 12, enter="pop", enter_dur=0.3))
+
+    # ---------------- 12: enjoyed it / same plan next week (37.34 - 46.5)
+    t = 37.34
     z = 1200
-    background(t - 0.5, MUSTARD, 1201, "down", z)
+    background(t - 0.55, MUSTARD, 1201, "down", z)
     pile = ["blue_flowers", "car_awning", "portrait_bob", "toast_collage", "flowers_mosaic",
             "camera_polaroid", "cat_neon", "clock_collage", "car_front", "portraits_stripes"]
     spots = [(260, 650), (800, 600), (540, 760), (230, 1050), (850, 1010), (560, 1080), (330, 1330),
@@ -609,15 +617,35 @@ def build():
     for i, (name, pos) in enumerate(zip(pile, spots)):
         add(Sprite(cutout(arts[name], 330, 330, 1210 + i, border=12), t + 0.05 + i * 0.13, pos,
                    rot=rng.uniform(-14, 14), z=z + 2 + i, enter="drop", enter_dur=0.3))
-    caption("had an amazing time.", t + 1.6, 300, z + 20, size=96, seed=1221)
-    add(Sprite(text_strip("here's to a lot more creativity next week", marker(72), paper=COBALT,
-                          ink=PAPER_WHITE, seed=1222, max_w=820), t + 2.4, (540, 1560), rot=-2,
-               z=z + 21, enter="slide_up", enter_dur=0.45))
-    for i, (sx, sy, sc, col) in enumerate(((140, 420, 100, PAPER_WHITE), (950, 380, 120, TERRACOTTA),
-                                           (120, 1500, 80, PAPER_WHITE), (960, 1440, 90, SAGE))):
-        add(Sprite(star(sc, col, 1230 + i), t + 3.0 + i * 0.12, (sx, sy), rot=rng.uniform(-20, 20),
-                   z=z + 22, enter="pop", enter_dur=0.3))
-    return t + 6.5
+    caption("this past week,\nI've enjoyed a lot.", t, 270, z + 20, size=88, seed=1221, t1=40.96,
+            leave="shrink", leave_dur=0.2)
+    caption("for next week,\nI have the same plan:", 40.96, 270, z + 21, size=88, seed=1223)
+    add(Sprite(text_strip("EXPLORE", marker(96), paper=COBALT, ink=PAPER_WHITE, seed=1222), 43.8,
+               (400, 1540), rot=-3, z=z + 22, enter="slide_left", enter_dur=0.35))
+    add(Sprite(text_strip("+ CREATE.", marker(96), paper=TERRACOTTA, ink=PAPER_WHITE, seed=1224), 44.4,
+               (680, 1700), rot=2.5, z=z + 23, enter="slide_right", enter_dur=0.35))
+    for i, (sx, sy, sc, col) in enumerate(((140, 460, 100, PAPER_WHITE), (950, 440, 120, TERRACOTTA),
+                                           (120, 1760, 80, PAPER_WHITE), (960, 1500, 90, SAGE))):
+        add(Sprite(star(sc, col, 1230 + i), 44.8 + i * 0.12, (sx, sy), rot=rng.uniform(-20, 20),
+                   z=z + 24, enter="pop", enter_dur=0.3))
+
+    # ---------------- 13: "Hope you enjoyed the video. See you later, alligator." (46.6 - end)
+    t = 46.6
+    z = 1300
+    background(t - 0.55, SAGE, 1301, "up", z)
+    for i, (col, yy, seed) in enumerate(((MUSTARD, 1560, 1302), (TERRACOTTA, 1700, 1303), (CREAM, 1820, 1304))):
+        hill = add_shadow(torn_sheet(W + 120, 600, col, seed, sides="t", amp=40), 0, -6, 10, 0.3)
+        add(Sprite(hill, t + 0.05 + i * 0.2, (W / 2, yy + 300), z=z + 1 + i, enter="slide_down",
+                   enter_dur=0.5, boil=0.4))
+    caption("hope you enjoyed the video.", t, 520, z + 10, size=92, seed=1311)
+    caption("see you later,", 48.4, 860, z + 11, size=110, seed=1312, paper=CREAM)
+    add(Sprite(text_strip("ALLIGATOR!", marker(124), paper=CHARTREUSE, ink=INK, seed=1313), 49.4,
+               (540, 1080), rot=-3, z=z + 12, enter="pop", enter_dur=0.4))
+    for i, (sx, sy, sc, col) in enumerate(((160, 330, 100, PAPER_WHITE), (930, 360, 110, MUSTARD),
+                                           (150, 1260, 90, COBALT), (940, 1300, 120, PAPER_WHITE))):
+        add(Sprite(star(sc, col, 1320 + i), 49.8 + i * 0.12, (sx, sy), rot=rng.uniform(-20, 20),
+                   z=z + 13, enter="pop", enter_dur=0.3))
+    return 53.0
 
 
 # --------------------------------------------------------------------------- render
@@ -664,18 +692,20 @@ def main():
     if "--preview" in sys.argv:
         pdir = os.path.join(OUT, "preview")
         os.makedirs(pdir, exist_ok=True)
-        for ts in [float(a) for a in sys.argv[sys.argv.index("--preview") + 1:]] or [3, 8, 13.5, 19.8, 24, 28.5,
-                                                                                     32, 36, 40, 44, 48, 55]:
+        for ts in [float(a) for a in sys.argv[sys.argv.index("--preview") + 1:]] or [2.5, 8, 13.8, 18.8, 22.5, 26,
+                                                                                     28, 31, 32.8, 36.5, 45.5, 51]:
             f = int(ts * FPS)
             Image.frombytes("RGB", (W, H), render_frame(f)).save(os.path.join(pdir, f"t{ts:05.1f}.jpg"),
                                                                  quality=88)
         return
     n = int(DURATION * FPS)
     out = os.path.join(OUT, "sketchbook_tour.mp4")
+    voice = os.path.join(ROOT, "audio", "voiceover.m4a")
+    audio_in = ["-i", voice] if os.path.exists(voice) else ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo"]
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-           "-r", str(FPS), "-i", "-", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
+           "-r", str(FPS), "-i", "-", *audio_in, "-map", "0:v", "-map", "1:a",
            "-r", str(OUT_FPS), "-c:v", "libx264", "-preset", "slow", "-crf", "21", "-pix_fmt", "yuv420p",
-           "-profile:v", "high", "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart", out]
+           "-profile:v", "high", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", out]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     with Pool(os.cpu_count()) as pool:
         for i, buf in enumerate(pool.imap(render_frame, range(n), chunksize=4)):
