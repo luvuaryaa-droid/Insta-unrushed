@@ -49,3 +49,13 @@ Save this as a preset and use it on every artist date.
 ## Midday sun fix
 
 Harsh noon light (like the leaf and temple clips) blows out pale ground and makes shadows hard. In the grade, pull highlights down (-15 to -25), lift shadows a little (+10), then add the warm/cool tint. Better still, shoot before 10 am or after 4 pm.
+
+## One-command treatment
+
+`make_cinematic.py` in this repo applies the whole look to a raw clip:
+
+```
+python3 make_cinematic.py raw_clip.mp4 output/my_clip_cinematic.mp4
+```
+
+It finds the cuts between shots, stabilises each shot (trying a full tripod lock and smooth mode, keeping whichever is steadier), fills a 1920x1080 frame with no bars, applies the signature grade and grain, and keeps the original sound. Options: `--mode tripod|smooth`, `--smoothing 90`, `--no-grain`.
