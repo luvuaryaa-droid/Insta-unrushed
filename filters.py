@@ -335,7 +335,7 @@ def _show_work(args):
     if lab is None:
         lab = _LABELS[name] = _label_img(name, w)
     lh, lw = lab.shape[:2]
-    x0, y0 = (w - lw) // 2, int(h * 0.86) - lh // 2
+    x0, y0 = (w - lw) // 2, int(h * 0.945) - lh // 2
     region = a[y0:y0 + lh, x0:x0 + lw].astype(np.float32)
     alpha = lab[..., 3:4] / 255.0
     a = a.copy()
