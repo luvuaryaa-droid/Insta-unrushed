@@ -5,6 +5,17 @@ There are two versions of this week's reel:
 1. **3D flip-book** (`make_flipbook.py` → `output/sketchbook_flipbook.mp4`, 59 s, 30 fps): an open sketchbook floats in a snowy night scene and flips through the pages, with big white hand-lettered captions. To float the book over your own footage instead of the drawn scene, run `python3 make_flipbook.py --bg my_clip.mp4`.
 2. **Papercut stop-motion** (`make_video.py` → `output/sketchbook_tour.mp4`), described below.
 
+## Cinematic edit
+
+`output/cinematic.mp4` (1920×1080, 8 s, 24 fps) is a Hollywood-style edit of a 5 s phone clip of sunlight through window bars:
+
+- 1.6× optical-flow slow motion and a slow push-in
+- golden teal/orange grade with a vignette and film grain
+- 2.39:1 letterbox bars and a fade from and to black
+- sound design: a sub-bass boom on the open and a swelling low drone over the clip's own slowed-down, reverbed room tone
+
+To re-render it, or to apply the same look to another clip, run `./make_cinematic.sh input.mp4 output/cinematic.mp4` (needs ffmpeg).
+
 ## Papercut version
 
 A papercut stop-motion reel (1080×1920, 56 s) made from this week's sketchbook pages. It has burned-in captions and no voice-over.
