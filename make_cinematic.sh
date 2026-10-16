@@ -2,9 +2,9 @@
 # Hollywood-style cinematic edit of a short clip.
 #   ./make_cinematic.sh input.mp4 [output.mp4]
 # Optional fixes for handheld footage (environment variables):
-#   STABILIZE=1   lock the shot off like a tripod (vidstab, two passes)
-#   ROTATE=-5.2   straighten by this many degrees (negative = anticlockwise)
-#   KEYSTONE=23   pull the top corners in by this many pixels so verticals
+#   STABILIZE=1   lock the shot off like a tripod (stabilize.py, needs OpenCV)
+#   ROTATE=-5.2   (with STABILIZE) straighten by this many degrees (negative = anticlockwise)
+#   KEYSTONE=23   (with STABILIZE) pull the top corners in by this many pixels so verticals
 #                 that lean apart towards the top become parallel
 #   ZOOM=1.08     starting zoom for the push-in (crops away stabilizer edges)
 # Look: 1.6x optical-flow slow motion, slow push-in, golden teal/orange grade,
@@ -26,30 +26,29 @@ ROTATE="${ROTATE:-0}"
 KEYSTONE="${KEYSTONE:-0}"
 ZOOM="${ZOOM:-1}"
 
-FIX=""
+IN_V="$IN"
+# Default: slow push-in done by zoompan at 4K so it doesn't step.
+GEOM="scale=3840:2160:flags=bicubic,\
+zoompan=z='${ZOOM}+0.10*on/${FRAMES}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1920x1080:fps=24,"
 if [ "$STABILIZE" = 1 ]; then
-  TRF=$(mktemp --suffix=.trf)
-  trap 'rm -f "$TRF"' EXIT
-  ffmpeg -hide_banner -loglevel error -y -i "$IN" -an \
-    -vf "vidstabdetect=shakiness=8:accuracy=15:tripod=1:result=$TRF" -f null -
-  FIX+="vidstabtransform=input=$TRF:tripod=1:optzoom=0:zoom=0:crop=keep:interpol=bicubic,"
-fi
-if [ "$KEYSTONE" != 0 ]; then
-  FIX+="perspective=x0=-${KEYSTONE}:y0=0:x1=W+${KEYSTONE}:y1=0:x2=0:y2=H:x3=W:y3=H:interpolation=cubic,"
-fi
-if [ "$ROTATE" != 0 ]; then
-  FIX+="rotate=${ROTATE}*PI/180:ow=iw:oh=ih:bilinear=1,"
+  # stabilize.py locks the shot, straightens it and does the push-in in a
+  # single sub-pixel warp per frame.
+  IN_V=$(mktemp --suffix=.mkv)
+  trap 'rm -f "$IN_V"' EXIT
+  python3 "$(dirname "$0")/stabilize.py" "$IN" "$IN_V" --rotate "$ROTATE" \
+    --keystone "$KEYSTONE" --zoom "$ZOOM" "$(awk "BEGIN{print $ZOOM+0.10}")" --size 1920x1080
+  GEOM=""
+elif [ "$ROTATE" != 0 ] || [ "$KEYSTONE" != 0 ]; then
+  echo "ROTATE and KEYSTONE need STABILIZE=1" >&2; exit 1
 fi
 
 GRADE="eq=gamma=0.82:contrast=1.18:saturation=1.15:brightness=-0.04,\
 curves=r='0/0 0.25/0.20 0.75/0.82 1/1':g='0/0.02 0.5/0.48 1/0.97':b='0/0.08 0.25/0.26 0.75/0.66 1/0.88',\
 colorbalance=rs=-0.08:bs=0.10:rh=0.08:bh=-0.10"
 
-VIDEO="[0:v]${FIX}scale=1920:1080:flags=lanczos,setpts=${SLOW}*PTS,\
+VIDEO="[1:v]scale=1920:1080:flags=lanczos,setpts=${SLOW}*PTS,\
 minterpolate=fps=24:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1,\
-scale=3840:2160:flags=bicubic,\
-zoompan=z='${ZOOM}+0.10*on/${FRAMES}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1920x1080:fps=24,\
-${GRADE},vignette=angle=PI/4.5,noise=alls=7:allf=t,\
+${GEOM}${GRADE},vignette=angle=PI/4.5,noise=alls=7:allf=t,\
 drawbox=y=0:w=iw:h=${BAR}:color=black:t=fill,drawbox=y=ih-${BAR}:w=iw:h=${BAR}:color=black:t=fill,\
 fade=t=in:st=0:d=1.0,fade=t=out:st=${FADE_OUT}:d=1.2,format=yuv420p[v]"
 
@@ -65,7 +64,7 @@ ${DRONE},lowpass=f=400,pan=stereo|c0=c0|c1=c0,aecho=0.8:0.7:60|120:0.3|0.2[drone
 afade=t=in:st=0:d=0.2,afade=t=out:st=${FADE_OUT}:d=1.2,alimiter=limit=0.89,loudnorm=I=-16:TP=-1.5[a]"
 
 mkdir -p "$(dirname "$OUT")"
-ffmpeg -hide_banner -loglevel error -stats -y -i "$IN" \
+ffmpeg -hide_banner -loglevel error -stats -y -i "$IN" -i "$IN_V" \
   -filter_complex "${VIDEO};${AUDIO}" -map "[v]" -map "[a]" \
   -c:v libx264 -preset slow -crf 18 -profile:v high -pix_fmt yuv420p \
   -c:a aac -b:a 192k -ar 48000 -movflags +faststart -t "$DUR" "$OUT"
