@@ -182,7 +182,7 @@ Every topic gives the viewer something to *feel* or *try*, not just an update on
 | 20 | Compassion week | A gentle self-portrait, no mirror | P | 39 |
 | 21 | Sketchbook tour | Only the pages I hated, and why I kept them | P | 18 |
 | 22 | "Do it sad" | Making art on bad days | T + P | 25 |
-| 23 | Walking as therapy (Julia Cameron) | Re-cut your nature walk Reel | D | 83 |
+| 23 | Walking as therapy (Julia Cameron) | Re-cut your nature walk artist date Reel | D | 83 |
 | 24 | Anxiety weather report | Draw today's inner weather | P | 7, 24 |
 | 25 | 30 days of artist dates | What actually changed in me | T + D | 81 |
 | 26 | Hobby vs practice | Why I don't care if it's good | T | 95 |
