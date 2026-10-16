@@ -17,6 +17,8 @@ from multiprocessing import Pool
 import numpy as np
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont, ImageSequence
 
+import filters
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 ART = os.path.join(ROOT, "artworks")
 FONTS = os.path.join(ROOT, "fonts")
@@ -624,6 +626,7 @@ def build():
 
 DURATION = None
 GRAIN = None
+LOOK = None   # filters.Look from --filter / --lut, applied to every finished frame
 
 
 def setup():
@@ -655,10 +658,15 @@ def render_frame(frame):
     arr = np.asarray(canvas.convert("RGB")).astype(np.float32)
     vig, g = GRAIN[(frame // 2) % 3]
     arr = arr * vig[..., None] + g[..., None]
-    return np.clip(arr, 0, 255).astype(np.uint8).tobytes()
+    out = np.clip(arr, 0, 255).astype(np.uint8)
+    if LOOK:
+        out = LOOK.apply(out, frame)
+    return out.tobytes()
 
 
 def main():
+    global LOOK
+    LOOK = filters.from_argv()
     os.makedirs(OUT, exist_ok=True)
     setup()
     if "--preview" in sys.argv:
@@ -667,11 +675,11 @@ def main():
         for ts in [float(a) for a in sys.argv[sys.argv.index("--preview") + 1:]] or [3, 8, 13.5, 19.8, 24, 28.5,
                                                                                      32, 36, 40, 44, 48, 55]:
             f = int(ts * FPS)
-            Image.frombytes("RGB", (W, H), render_frame(f)).save(os.path.join(pdir, f"t{ts:05.1f}.jpg"),
+            Image.frombytes("RGB", (W, H), render_frame(f)).save(filters.with_suffix(os.path.join(pdir, f"t{ts:05.1f}.jpg"), LOOK),
                                                                  quality=88)
         return
     n = int(DURATION * FPS)
-    out = os.path.join(OUT, "sketchbook_tour.mp4")
+    out = filters.with_suffix(os.path.join(OUT, "sketchbook_tour.mp4"), LOOK)
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
            "-r", str(FPS), "-i", "-", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
            "-r", str(OUT_FPS), "-c:v", "libx264", "-preset", "slow", "-crf", "21", "-pix_fmt", "yuv420p",
@@ -685,7 +693,7 @@ def main():
     proc.stdin.close()
     proc.wait()
     cover = Image.frombytes("RGB", (W, H), render_frame(int(3.2 * FPS)))
-    cover.save(os.path.join(OUT, "cover.jpg"), quality=92)
+    cover.save(filters.with_suffix(os.path.join(OUT, "cover.jpg"), LOOK), quality=92)
     print("wrote", out)
 
 

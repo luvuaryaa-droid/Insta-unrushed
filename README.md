@@ -44,3 +44,20 @@ python3 make_carousels.py                  # carousels + single-image ads
 ```
 python3 make_guides.py   # needs reportlab and ffmpeg
 ```
+
+## Filters
+
+`filters.py` adds nine colour filters (bw, sepia, warm, cool, contrast, matte, duotone, vhs, riso) and support for your own `.cube` colour grades (LUTs) to every renderer. Add `--filter NAME[:STRENGTH]` and/or `--lut FILE.cube` to any of them; the filtered file is saved next to the original with the filter in its name.
+
+```
+python3 make_ads.py artists --filter warm          # -> output/ads/ad_artists_you_paint_warm.mp4
+python3 make_voiceover.py artists --filter warm    # voice-over on the warm version
+python3 make_video.py --filter vhs:0.6
+python3 make_flipbook.py --filter cool
+python3 make_carousels.py creators --filter duotone
+python3 filters.py IN.mp4 OUT.mp4 --filter sepia:0.8 --lut grade.cube   # any finished video/image/folder, audio kept
+python3 filters.py --list
+python3 filters.py --showreel output/sketchbook_tour.mp4 output/filters/filters_showreel.mp4
+```
+
+`output/guides/4_filters.pdf` shows every filter.

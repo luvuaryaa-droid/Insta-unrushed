@@ -18,6 +18,8 @@ from multiprocessing import Pool
 import numpy as np
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont, ImageOps, ImageSequence
 
+import filters
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 ART = os.path.join(ROOT, "artworks")
 FONTS = os.path.join(ROOT, "fonts")
@@ -372,6 +374,7 @@ FLAKES = None
 FLAKE_SPRITES = None
 CAPTION_IMGS = None
 BG_VIDEO = None
+LOOK = None   # filters.Look from --filter / --lut
 
 
 def radial(size, color, power=2.0, alpha=255):
@@ -558,12 +561,15 @@ def render_frame(i):
         frame.alpha_composite(Image.new("RGBA", (W, H), (6, 7, 10, int(215 * fade))))
     draw_caption(frame, t)
     if BG_VIDEO:
-        return frame.tobytes()
+        return frame.tobytes()   # the look is applied after ffmpeg lays the book over the footage
+    if LOOK:
+        return LOOK.apply(np.asarray(frame.convert("RGB")), i).tobytes()
     return frame.convert("RGB").tobytes()
 
 
 def main():
-    global BG_VIDEO
+    global BG_VIDEO, LOOK
+    LOOK = filters.from_argv()
     if "--bg" in sys.argv:
         BG_VIDEO = sys.argv[sys.argv.index("--bg") + 1]
     os.makedirs(OUT, exist_ok=True)
@@ -575,10 +581,11 @@ def main():
         for ts in times or [1.5, 3.8, 9, 17.3, 20.3, 22, 25, 34, 43, 46, 52, 57.5]:
             buf = render_frame(int(ts * FPS))
             Image.frombytes("RGBA" if BG_VIDEO else "RGB", (W, H), buf).convert("RGB").save(
-                os.path.join(pdir, f"flip_{ts:05.1f}.jpg"), quality=88)
+                filters.with_suffix(os.path.join(pdir, f"flip_{ts:05.1f}.jpg"), LOOK), quality=88)
         return
     n = int(DURATION * FPS)
-    out = os.path.join(OUT, "sketchbook_flipbook.mp4")
+    final = filters.with_suffix(os.path.join(OUT, "sketchbook_flipbook.mp4"), LOOK)
+    out = final + ".raw.mp4" if (LOOK and BG_VIDEO) else final
     enc = ["-c:v", "libx264", "-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p", "-profile:v", "high",
            "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", "-t", str(DURATION), out]
     raw = ["-f", "rawvideo", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-"]
@@ -598,9 +605,12 @@ def main():
                 print(f"frame {i}/{n}", flush=True)
     proc.stdin.close()
     proc.wait()
+    if out != final:
+        filters.process_video(out, final, LOOK)
+        os.remove(out)
     Image.frombytes("RGBA" if BG_VIDEO else "RGB", (W, H), render_frame(int(1.6 * FPS))).convert("RGB").save(
-        os.path.join(OUT, "flipbook_cover.jpg"), quality=92)
-    print("wrote", out)
+        filters.with_suffix(os.path.join(OUT, "flipbook_cover.jpg"), LOOK), quality=92)
+    print("wrote", final)
 
 
 if __name__ == "__main__":

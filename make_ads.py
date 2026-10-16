@@ -22,6 +22,7 @@ from multiprocessing import Pool
 import numpy as np
 from PIL import Image, ImageDraw, ImageSequence
 
+import filters
 import make_video as mv
 from make_video import (ART, CHARCOAL, CHARTREUSE, COBALT, CREAM, DUSTY_BLUE, FPS, H, INK, MUSTARD,
                         OUT, OUT_FPS, PAPER_WHITE, PINK, SAGE, TERRACOTTA, W, Sprite, add, add_shadow,
@@ -646,10 +647,10 @@ def render(name):
         os.makedirs(pdir, exist_ok=True)
         times = [float(a) for a in sys.argv[sys.argv.index("--preview") + 1:]]
         for ts in times or [x + 0.5 for x in range(0, int(mv.DURATION), 2)]:
-            still(ts).save(os.path.join(pdir, f"{name}_t{ts:05.1f}.jpg"), quality=85)
+            still(ts).save(filters.with_suffix(os.path.join(pdir, f"{name}_t{ts:05.1f}.jpg"), mv.LOOK), quality=85)
         return
     n = int(mv.DURATION * FPS)
-    out = os.path.join(ADS_OUT, fname)
+    out = filters.with_suffix(os.path.join(ADS_OUT, fname), mv.LOOK)
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
            "-r", str(FPS), "-i", "-", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
            "-r", str(OUT_FPS), "-c:v", "libx264", "-preset", "slow", "-crf", "21", "-pix_fmt", "yuv420p",
@@ -660,11 +661,12 @@ def render(name):
             proc.stdin.write(buf)
     proc.stdin.close()
     proc.wait()
-    still(cover_t).save(os.path.join(ADS_OUT, fname.replace(".mp4", "_cover.jpg")), quality=90)
+    still(cover_t).save(out.replace(".mp4", "_cover.jpg"), quality=90)
     print(f"wrote {out} ({mv.DURATION:.1f}s)")
 
 
 def main():
+    mv.LOOK = filters.from_argv()
     os.makedirs(ADS_OUT, exist_ok=True)
     names = [a for a in sys.argv[1:] if a in ADS] or list(ADS)
     for name in names:

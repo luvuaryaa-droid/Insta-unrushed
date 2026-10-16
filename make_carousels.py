@@ -16,12 +16,14 @@ import sys
 import numpy as np
 from PIL import Image, ImageDraw
 
+import filters
 import make_ads as ma
 from make_video import (CHARCOAL, CHARTREUSE, COBALT, CREAM, DUSTY_BLUE, INK, MUSTARD, OUT, PAPER_WHITE,
                         PINK, SAGE, TERRACOTTA, add_shadow, caveat, cutout, marker, paper_circle,
                         paper_texture, star, strike, text_strip, torn_sheet, typewriter)
 
 ADS_OUT = os.path.join(OUT, "ads")
+LOOK = None   # filters.Look from --filter / --lut
 
 
 class Slide:
@@ -65,7 +67,8 @@ class Slide:
         yy, xx = np.mgrid[0:self.h, 0:self.w]
         vig = 1 - 0.16 * (((xx - self.w / 2) / (self.w / 2)) ** 2 + ((yy - self.h / 2) / (self.h / 2)) ** 2) / 2
         arr = arr * vig[..., None] + np.random.default_rng(5).normal(0, 2.5, (self.h, self.w))[..., None]
-        return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
+        arr = np.clip(arr, 0, 255).astype(np.uint8)
+        return Image.fromarray(LOOK.apply(arr) if LOOK else arr)
 
 
 def brand_block(s, y, bg_dark=False):
@@ -395,12 +398,15 @@ BUILDERS = {"artists": artists, "creators": creators, "beginners": beginners}
 
 
 def main():
+    global LOOK
+    LOOK = filters.from_argv()
+    sfx = LOOK.suffix() if LOOK else ""
     A = ma.arts()
     for ad in [a for a in sys.argv[1:] if a in BUILDERS] or list(BUILDERS):
         for i, s in enumerate(BUILDERS[ad](A), 1):
-            save(s.finish(), os.path.join(ADS_OUT, f"carousel_{ad}", f"slide_{i}.jpg"))
-        save(single(A, ad, 1080, 1080), os.path.join(ADS_OUT, f"image_{ad}_square.jpg"))
-        save(single(A, ad, 1080, 1920), os.path.join(ADS_OUT, f"image_{ad}_story.jpg"))
+            save(s.finish(), os.path.join(ADS_OUT, f"carousel_{ad}{sfx}", f"slide_{i}.jpg"))
+        save(single(A, ad, 1080, 1080), os.path.join(ADS_OUT, f"image_{ad}_square{sfx}.jpg"))
+        save(single(A, ad, 1080, 1920), os.path.join(ADS_OUT, f"image_{ad}_story{sfx}.jpg"))
         print("wrote", ad)
 
 

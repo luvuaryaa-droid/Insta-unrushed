@@ -19,6 +19,8 @@ import numpy as np
 import soundfile as sf
 from kokoro_onnx import Kokoro
 
+import filters
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 ADS = os.path.join(ROOT, "output", "ads")
 MODELS = os.path.join(ROOT, "models")
@@ -89,9 +91,9 @@ def fit(x, max_len, tmp):
     return sf.read(b, dtype="float32")[0]
 
 
-def voice_over(tts, name):
+def voice_over(tts, name, look=None):
     video, voice, script = SCRIPTS[name]
-    src = os.path.join(ADS, video)
+    src = filters.with_suffix(os.path.join(ADS, video), look)   # e.g. the --filter warm render
     out = src.replace(".mp4", "_voiceover.mp4")
     total = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration",
                                            "-of", "csv=p=0", src]))
@@ -117,10 +119,11 @@ def voice_over(tts, name):
 
 
 def main():
+    look = filters.from_argv()
     tts = Kokoro(os.path.join(MODELS, "kokoro-v1.0.onnx"), os.path.join(MODELS, "voices-v1.0.bin"))
     for name in [a for a in sys.argv[1:] if a in SCRIPTS] or list(SCRIPTS):
         print(name)
-        voice_over(tts, name)
+        voice_over(tts, name, look)
 
 
 if __name__ == "__main__":

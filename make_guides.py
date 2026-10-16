@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageOps
+from PIL import Image, ImageFilter
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.pagesizes import A4
@@ -24,6 +24,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (Image as RLImage, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table,
                                 TableStyle)
 
+import filters
 import make_ads as ma
 import make_carousels as mc
 from make_video import (COBALT, CREAM, DUSTY_BLUE, FONTS, INK, MUSTARD, OUT, PAPER_WHITE,
@@ -83,7 +84,7 @@ def art(name):
 
 # --------------------------------------------------------------------------- PDF scaffolding
 
-def header_footer(title, colour):
+def header_footer(title, colour, sub="what it supports today, and what can be added"):
     def draw(c, doc):
         w, h = A4
         c.saveState()
@@ -93,7 +94,7 @@ def header_footer(title, colour):
         c.setFont("Marker", 26)
         c.drawString(1.6 * cm, h - 1.95 * cm, title)
         c.setFont("DejaVu", 9.5)
-        c.drawString(1.6 * cm, h - 2.6 * cm, "Creator Studio · what it supports today, and what can be added")
+        c.drawString(1.6 * cm, h - 2.6 * cm, "Creator Studio · " + sub)
         c.setFont("DejaVu", 8)
         c.setFillColor(MUTED)
         c.drawString(1.6 * cm, 1.0 * cm, "Creator Studio · made with Claude · ₹699 lifetime access · "
@@ -152,7 +153,7 @@ def gallery(cells, cols=5, w=3.15 * cm):
     return t
 
 
-def build(path, title, colour, story):
+def build(path, title, colour, story, sub=None):
     doc = SimpleDocTemplate(path, pagesize=A4, leftMargin=1.6 * cm, rightMargin=1.6 * cm, topMargin=3.7 * cm,
                             bottomMargin=1.8 * cm, title=f"Creator Studio · {title}", author="Creator Studio")
     glued = []   # never leave a section heading stranded at the bottom of a page
@@ -161,7 +162,7 @@ def build(path, title, colour, story):
             glued[-1] = KeepTogether([glued[-1]] + (f._content if isinstance(f, KeepTogether) else [f]))
         else:
             glued.append(f)
-    hf = header_footer(title, colour)
+    hf = header_footer(title, colour, sub) if sub else header_footer(title, colour)
     doc.build(glued, onFirstPage=hf, onLaterPages=hf)
     print("wrote", path)
 
@@ -473,68 +474,65 @@ def grain_vignette(im, amount=1.0):
     return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
 
 
-def tone(im, mat=None, add=(0, 0, 0)):
-    a = np.asarray(im.convert("RGB")).astype(np.float32)
-    if mat is not None:
-        a = a @ np.array(mat, np.float32).T
-    a += add
-    return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
-
-
 def filters_guide():
     base = art("clock_collage").resize((560, 560))
     S = []
     S.append(Paragraph(
-        "Today the looks are baked into each style rather than offered as a one-tap filter menu. The filters "
-        "below are the ones the renderers apply. Each preview uses the same painting so you can compare.",
-        S_INTRO))
-    S.append(Paragraph("Built in", S_H2))
-    haze = np.asarray(base).astype(np.float32)
-    haze = haze * 0.72 + np.array([120, 128, 150]) * 0.28
-    dark = Image.blend(base, Image.new("RGB", base.size, (6, 7, 10)), 0.55)
+        "Nine colour filters plus your own colour grades (.cube LUT files) can go on anything Creator Studio makes: "
+        "the papercut reel, the 3D flip-book, the ads, the carousels and images, or any finished video or image, "
+        "with the voice-over and audio kept. Every filter has a strength from 0 to 1. Each preview below is made "
+        "by the filter code itself, on the same painting, so you can compare.", S_INTRO))
+    S.append(Paragraph("Colour filters", S_H2))
+    arr = np.asarray(base)
+    cells = [(save(base, "f_orig", 440), "<b>Original</b><br/>no filter")]
+    for name in filters.FILTERS:
+        title, _, rest = filters.DESCRIPTIONS[name].partition(": ")
+        cells.append((save(Image.fromarray(filters.Look(name).apply(arr, frame=3)), "f_" + name, 440),
+                      f"<b>{title}</b>  <font name='DejaVu' color='#7a756d'>{name}</font><br/>{rest}"))
+    S.append(gallery(cells, cols=4, w=3.9 * cm))
+    S.append(KeepTogether([Paragraph("Strength", S_H2), Paragraph(
+        "Add <b>:0.5</b> (or any value from 0 to 1) to blend a filter in partly. Below: sepia at 25%, 50% and 100%.",
+        S_BODY), Spacer(1, 4), gallery([(save(Image.fromarray(filters.Look("sepia", k).apply(arr)), f"f_s{int(k * 100)}", 440),
+                       f"<b>sepia:{k:g}</b>") for k in (0.25, 0.5, 1.0)], cols=4, w=3.9 * cm)]))
+    S.append(Paragraph("How to use them", S_H2))
+    S.append(grid([
+        ["To filter", "Ask for it / run"],
+        ["An ad", "<i>“Make the artists ad warm.”</i><br/>python3 make_ads.py artists --filter warm"],
+        ["An ad with its voice-over", "python3 make_ads.py artists --filter warm<br/>"
+                                      "python3 make_voiceover.py artists --filter warm"],
+        ["The papercut reel", "python3 make_video.py --filter vhs:0.6"],
+        ["The 3D flip-book", "python3 make_flipbook.py --filter cool  (also with --bg your_clip.mp4)"],
+        ["Carousels and images", "python3 make_carousels.py creators --filter duotone"],
+        ["Anything already made", "python3 filters.py IN.mp4 OUT.mp4 --filter sepia:0.8<br/>"
+                                  "Works on videos (audio kept), images, or a whole folder of slides."],
+        ["Your own colour grade", "python3 make_ads.py beginners --lut my_grade.cube<br/>"
+                                  "python3 filters.py IN.mp4 OUT.mp4 --lut my_grade.cube --filter contrast:0.4"],
+        ["See them all", "python3 filters.py --list<br/>python3 filters.py --showreel IN.mp4 OUT.mp4"],
+    ], [4.4 * cm, 13.4 * cm]))
+    S.append(Spacer(1, 6))
+    S.append(Paragraph(
+        "Filtered files are saved next to the originals with the filter in the name (for example "
+        "ad_artists_you_paint_warm.mp4), so nothing is overwritten. LUTs are standard 3D .cube files as exported "
+        "by DaVinci Resolve, Premiere, Lightroom and most colour-grading apps; the LUT is applied first, then the "
+        "filter. VHS and riso move a little from frame to frame, like real tape and print grain; the other filters "
+        "are steady, so videos don't flicker.", S_BODY))
+    S.append(Paragraph("Also part of the styles", S_H2))
+    haze = np.asarray(base).astype(np.float32) * 0.72 + np.array([120, 128, 150]) * 0.28
     cells = [
-        (save(base, "f_orig", 440), "<b>Original</b><br/>no filter"),
         (save(grain_vignette(base), "f_grain", 440), "<b>Film grain + vignette</b><br/>on every papercut frame; "
                                                     "the grain changes each frame"),
-        (save(base.filter(ImageFilter.GaussianBlur(9)), "f_blur", 300), "<b>Defocus blur</b><br/>flip-book "
+        (save(base.filter(ImageFilter.GaussianBlur(9)), "f_blur", 440), "<b>Defocus blur</b><br/>flip-book "
                                                                        "backgrounds, foreground tree"),
-        (save(Image.fromarray(np.clip(haze, 0, 255).astype(np.uint8)), "f_haze", 300), "<b>Haze</b><br/>misty "
-                                                                                       "horizon in the night scene"),
-        (save(dark, "f_dark", 440), "<b>Fade to dark</b><br/>ending dim of the flip-book"),
-        (save(frame("sketchbook_flipbook.mp4", 4.0, (0, 700, 1080, 1780)), "f_night", 300),
+        (save(Image.fromarray(np.clip(haze, 0, 255).astype(np.uint8)), "f_haze", 440),
+         "<b>Haze</b><br/>misty horizon in the night scene"),
+        (save(Image.blend(base, Image.new("RGB", base.size, (6, 7, 10)), 0.55), "f_dark", 440),
+         "<b>Fade to dark</b><br/>ending dim of the flip-book"),
+        (save(frame("sketchbook_flipbook.mp4", 4.0, (0, 700, 1080, 1780)), "f_night", 440),
          "<b>Night scene grade</b><br/>cool blue night with warm lamps (flip-book)"),
     ]
-    S.append(gallery(cells, cols=3, w=5.2 * cm))
-    later = [Paragraph("Not built yet (can be added on request)", S_H2), Paragraph(
-        "These previews were made just now with a few lines of image code, to show what each filter would look "
-        "like. They are not options in the renderers yet. Once added, they could apply to whole reels, single "
-        "scenes or still images.", S_INTRO)]
-    gray = ImageOps.grayscale(base).convert("RGB")
-    sepia = tone(gray, [[0.95, 0, 0], [0, 0.82, 0], [0, 0, 0.62]], (18, 10, 0))
-    warm = tone(base, [[1.08, 0, 0], [0, 1.0, 0], [0, 0, 0.86]], (8, 2, -6))
-    cool = tone(base, [[0.9, 0, 0], [0, 0.98, 0], [0, 0, 1.12]], (-4, 0, 10))
-    punch = ImageOps.autocontrast(base, cutoff=3)
-    matte = tone(base, [[0.82, 0, 0], [0, 0.82, 0], [0, 0, 0.82]], (34, 32, 30))
-    duo = ImageOps.colorize(ImageOps.grayscale(base), black=COBALT, white=(250, 214, 120))
-    vhs = base.copy()
-    r, g, b = vhs.split()
-    vhs = Image.merge("RGB", (r.transform(r.size, Image.AFFINE, (1, 0, -6, 0, 1, 0)), g,
-                              b.transform(b.size, Image.AFFINE, (1, 0, 5, 0, 1, 0))))
-    d = ImageDraw.Draw(vhs, "RGBA")
-    for y in range(0, vhs.height, 4):
-        d.line((0, y, vhs.width, y), fill=(0, 0, 0, 40))
-    riso = ImageOps.posterize(base, 2)
-    cells = [(save(gray, "p_bw", 440), "<b>Black and white</b>"), (save(sepia, "p_sepia", 440), "<b>Sepia</b>"),
-             (save(warm, "p_warm", 440), "<b>Warm</b>"), (save(cool, "p_cool", 440), "<b>Cool</b>"),
-             (save(punch, "p_punch", 440), "<b>High contrast</b>"), (save(matte, "p_matte", 440), "<b>Faded matte</b>"),
-             (save(duo, "p_duo", 440), "<b>Duotone</b><br/>cobalt + mustard"),
-             (save(vhs, "p_vhs", 440), "<b>VHS</b><br/>colour split + scanlines"),
-             (save(riso, "p_riso", 440), "<b>Poster / riso</b><br/>reduced colours")]
-    S.append(KeepTogether(later + [gallery(cells, cols=3, w=5.2 * cm)]))
-    S.append(Spacer(1, 4))
-    S.append(Paragraph("Custom colour grades (LUT files from other editors) could also be applied to finished videos "
-                       "with the video encoder already used here (ffmpeg).", S_BODY))
-    build(os.path.join(GUIDES, "4_filters.pdf"), "FILTERS", DUSTY_BLUE, S)
+    S.append(gallery(cells, cols=5, w=3.05 * cm))
+    build(os.path.join(GUIDES, "4_filters.pdf"), "FILTERS", DUSTY_BLUE, S,
+          sub="nine colour filters and your own colour grades, on everything it makes")
 
 
 def main():
