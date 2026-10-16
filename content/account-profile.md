@@ -32,3 +32,6 @@ Snapshot from Instagram screenshots shared on 16 Oct 2026. Update when new numbe
 - Episode numbers and Part 1/2 on covers put off new viewers
 - Hooks talk about the creator's journey, not what the viewer gets
 - Artist date Reel ("Artist Date: A Nature Walk") file is landscape (1280x720) and the key insight lands after ~20s
+
+## Signature style
+- Artist date videos: Hollywood cinematic style (warm faded grade, film narrator voiceover, slow pacing). Details in reels/artist-date-beauty-in-the-mundane.md
