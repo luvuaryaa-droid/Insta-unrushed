@@ -3,7 +3,7 @@
 Signature series: **Artist Date, Hollywood cinematic style** (see "Signature style" at the end).
 Raw footage: Beauty_in_the_Mundane_Hollywood_Cinematic.mp4 (93s, cinematic grade, letterbox bars, no voiceover yet)
 
-**Target cut:** about 55 seconds, voiceover with on-screen subtitles, vertical 9:16.
+**Target cut:** about 55 seconds, voiceover with on-screen subtitles, horizontal 16:9 with 2.39:1 cinematic bars.
 
 ---
 
@@ -73,14 +73,14 @@ Free 21-day Gentle Art prompts in my bio.
 
 ---
 
-## Content Quality Score: 87/100 (B, Strong)
+## Content Quality Score: 85/100 (B, Strong)
 
 | Category | Score | Notes |
 |----------|-------|-------|
 | Hook Strength | 22/25 | Identity trigger (anxious mind) plus curiosity ("a different job"), over a moving bird |
 | Content Quality | 22/25 | Clear arc: anxiety, noticing, insight, invitation. Real footage, your own voice |
 | Caption & CTA | 18/20 | 500+ characters, comment, save and send CTAs, lead magnet |
-| Format Compliance | 12/15 | 55s is on the long side; must be exported vertical with subtitles |
+| Format Compliance | 10/15 | Horizontal shows smaller in the Reels feed; 55s is on the long side; subtitles required |
 | Algorithm Signals | 13/15 | Shareable, original, signature style; no glimpse of you yet |
 
 **Polish to reach 90+:** add one 2-second shot of your hand (touching a flower or holding your sketchbook) around 35-41s, and test the 30-second version as a Trial Reel.
@@ -92,7 +92,7 @@ Free 21-day Gentle Art prompts in my bio.
 Keep these the same in every artist date video so people recognise it instantly:
 
 1. **The grade:** your warm, slightly faded cinematic colour. Same filter or preset every time.
-2. **The frame:** export **vertical 9:16**. For the film look, put the picture in a 4:5 window with thin black bars top and bottom, instead of a wide letterbox (wide bars shrink the picture to a thin strip on phones). Shoot vertical, or horizontal in 4K so you can crop.
+2. **The frame:** horizontal 16:9 with 2.39:1 widescreen bars, shot in 4K so you can reframe. Make a separate vertical cover for the grid.
 3. **The voice:** first-person narrator, slow and warm, always with subtitles (most people watch on mute).
 4. **The opening:** a moving shot plus one line about the anxious mind. Never a black frame or title card first.
 5. **The closing:** the same end card every time: "Artist Date · the_unrushed.whispers", plus one small invitation to the viewer.

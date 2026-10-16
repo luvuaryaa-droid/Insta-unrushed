@@ -6,7 +6,7 @@ Your signature look for every artist date video. Same settings, same grade, same
 
 | Setting | Use | Why |
 |---------|-----|-----|
-| Resolution | 4K | Room to crop to vertical (4:5 or 9:16) without losing sharpness |
+| Resolution | 4K, horizontal | Room to reframe and crop to widescreen without losing sharpness |
 | Frame rate | 24 fps | The "film" frame rate |
 | Shutter | 1/50 | Natural motion blur (the 180-degree rule). Fast shutters make movement look jittery and "video-ish" |
 | ND filter | Yes, in daylight | Lets you keep 1/50 on a bright day without overexposing. A clip-on variable ND for phones is cheap |
@@ -39,8 +39,10 @@ Save this as a preset and use it on every artist date.
 | Vignette | light |
 | Grain | 5 to 10 |
 
-## Export
+## Export (horizontal, your signature)
 
-- Vertical 1080x1920 (9:16).
-- Picture in a 4:5 window (1080x1350) with thin black bars top and bottom for the film look.
-- Subtitles in the middle third, never in the bottom quarter (Instagram's caption and buttons cover it).
+- Horizontal 1920x1080 (16:9).
+- Cinematic widescreen bars: picture at 2.39:1 (1920x804) with black bars top and bottom (138px each).
+- When cropping to 2.39:1, frame so heads and feet stay in the picture (move the crop window up or down per shot).
+- Subtitles inside the picture, lower third, white serif, small. On phones the video sits in the middle of the screen, so keep text large enough to read at that size.
+- Cover image: make a separate vertical 9:16 cover (a still with your title) so the grid tile looks good.
