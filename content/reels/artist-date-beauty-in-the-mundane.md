@@ -1,9 +1,9 @@
 # Reel: Artist Date, Beauty in the Mundane
 
 Signature series: **Artist Date, Hollywood cinematic style** (see "Signature style" at the end).
-Raw footage: Beauty_in_the_Mundane_Hollywood_Cinematic.mp4 (93s, cinematic grade, letterbox bars, no voiceover yet)
+Raw footage: Beauty_in_the_Mundane_Hollywood_Cinematic.mp4 (93s, cinematic grade, no voiceover yet. This export has letterbox bars baked in; re-export from the original clips at full 16:9)
 
-**Target cut:** about 55 seconds, voiceover with on-screen subtitles, horizontal 16:9 with 2.39:1 cinematic bars.
+**Target cut:** about 55 seconds, voiceover with on-screen subtitles, horizontal 16:9, full frame, no letterbox bars.
 
 ---
 
@@ -92,7 +92,7 @@ Free 21-day Gentle Art prompts in my bio.
 Keep these the same in every artist date video so people recognise it instantly:
 
 1. **The grade:** your warm, slightly faded cinematic colour. Same filter or preset every time.
-2. **The frame:** horizontal 16:9 with 2.39:1 widescreen bars, shot in 4K so you can reframe. Make a separate vertical cover for the grid.
+2. **The frame:** horizontal 16:9, full frame, no letterbox bars. Shoot in 4K if you can, so you can reframe. Make a separate vertical cover for the grid.
 3. **The voice:** first-person narrator, slow and warm, always with subtitles (most people watch on mute).
 4. **The opening:** a moving shot plus one line about the anxious mind. Never a black frame or title card first.
 5. **The closing:** the same end card every time: "Artist Date · the_unrushed.whispers", plus one small invitation to the viewer.

@@ -39,10 +39,13 @@ Save this as a preset and use it on every artist date.
 | Vignette | light |
 | Grain | 5 to 10 |
 
-## Export (horizontal, your signature)
+## Export (your signature)
 
-- Horizontal 1920x1080 (16:9).
-- Cinematic widescreen bars: picture at 2.39:1 (1920x804) with black bars top and bottom (138px each).
-- When cropping to 2.39:1, frame so heads and feet stay in the picture (move the crop window up or down per shot).
-- Subtitles inside the picture, lower third, white serif. On phones the video sits small in the middle of the screen, so size text big enough to read there.
+- Horizontal 16:9, 1920x1080. **No letterbox bars**: the full frame is picture.
+- The film feel comes from the grade, 24 fps, slow shots and the 1/50 shutter, not from bars.
+- Subtitles in the lower third, white serif. On phones the video sits small in the middle of the screen, so size text big enough to read there.
 - Cover image: make a separate vertical 9:16 cover (a still with your title) so the grid tile looks good.
+
+## Midday sun fix
+
+Harsh noon light (like the leaf and temple clips) blows out pale ground and makes shadows hard. In the grade, pull highlights down (-15 to -25), lift shadows a little (+10), then add the warm/cool tint. Better still, shoot before 10 am or after 4 pm.
