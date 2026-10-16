@@ -44,5 +44,5 @@ Save this as a preset and use it on every artist date.
 - Horizontal 1920x1080 (16:9).
 - Cinematic widescreen bars: picture at 2.39:1 (1920x804) with black bars top and bottom (138px each).
 - When cropping to 2.39:1, frame so heads and feet stay in the picture (move the crop window up or down per shot).
-- Subtitles inside the picture, lower third, white serif, small. On phones the video sits in the middle of the screen, so keep text large enough to read at that size.
+- Subtitles inside the picture, lower third, white serif. On phones the video sits small in the middle of the screen, so size text big enough to read there.
 - Cover image: make a separate vertical 9:16 cover (a still with your title) so the grid tile looks good.
