@@ -16,6 +16,12 @@ There are two versions of this week's reel:
 
 To re-render it, or to apply the same look to another clip, run `./make_cinematic.sh input.mp4 output/cinematic.mp4` (needs ffmpeg).
 
+`output/door_cinematic.mp4` (7 s) gives the same look to a handheld 4.6 s clip of sunlight on a wooden door. It was also locked off like a tripod shot (vidstab), and straightened: rotated 5.2° with a keystone fix so the door frame stands vertical.
+
+```
+STABILIZE=1 ROTATE=-5.2 KEYSTONE=23 ZOOM=1.08 ./make_cinematic.sh door.mp4 output/door_cinematic.mp4
+```
+
 ## Papercut version
 
 A papercut stop-motion reel (1080×1920, 56 s) made from this week's sketchbook pages. It has burned-in captions and no voice-over.

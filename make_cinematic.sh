@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # Hollywood-style cinematic edit of a short clip.
 #   ./make_cinematic.sh input.mp4 [output.mp4]
+# Optional fixes for handheld footage (environment variables):
+#   STABILIZE=1   lock the shot off like a tripod (vidstab, two passes)
+#   ROTATE=-5.2   straighten by this many degrees (negative = anticlockwise)
+#   KEYSTONE=23   pull the top corners in by this many pixels so verticals
+#                 that lean apart towards the top become parallel
+#   ZOOM=1.08     starting zoom for the push-in (crops away stabilizer edges)
 # Look: 1.6x optical-flow slow motion, slow push-in, golden teal/orange grade,
 # vignette, film grain, 2.39:1 letterbox, fade from/to black.
 # Sound: sub boom on the open, low drone + swell, the clip's own room tone
@@ -15,15 +21,34 @@ DUR=$(awk "BEGIN{printf \"%.3f\", $SRC_DUR*$SLOW}")
 FADE_OUT=$(awk "BEGIN{printf \"%.3f\", $DUR-1.2}")
 FRAMES=$(awk "BEGIN{printf \"%d\", $DUR*24}")
 BAR=138                        # 1080 - 1920/2.39, halved
+STABILIZE="${STABILIZE:-0}"
+ROTATE="${ROTATE:-0}"
+KEYSTONE="${KEYSTONE:-0}"
+ZOOM="${ZOOM:-1}"
+
+FIX=""
+if [ "$STABILIZE" = 1 ]; then
+  TRF=$(mktemp --suffix=.trf)
+  trap 'rm -f "$TRF"' EXIT
+  ffmpeg -hide_banner -loglevel error -y -i "$IN" -an \
+    -vf "vidstabdetect=shakiness=8:accuracy=15:tripod=1:result=$TRF" -f null -
+  FIX+="vidstabtransform=input=$TRF:tripod=1:optzoom=0:zoom=0:crop=keep:interpol=bicubic,"
+fi
+if [ "$KEYSTONE" != 0 ]; then
+  FIX+="perspective=x0=-${KEYSTONE}:y0=0:x1=W+${KEYSTONE}:y1=0:x2=0:y2=H:x3=W:y3=H:interpolation=cubic,"
+fi
+if [ "$ROTATE" != 0 ]; then
+  FIX+="rotate=${ROTATE}*PI/180:ow=iw:oh=ih:bilinear=1,"
+fi
 
 GRADE="eq=gamma=0.82:contrast=1.18:saturation=1.15:brightness=-0.04,\
 curves=r='0/0 0.25/0.20 0.75/0.82 1/1':g='0/0.02 0.5/0.48 1/0.97':b='0/0.08 0.25/0.26 0.75/0.66 1/0.88',\
 colorbalance=rs=-0.08:bs=0.10:rh=0.08:bh=-0.10"
 
-VIDEO="[0:v]scale=1920:1080:flags=lanczos,setpts=${SLOW}*PTS,\
+VIDEO="[0:v]${FIX}scale=1920:1080:flags=lanczos,setpts=${SLOW}*PTS,\
 minterpolate=fps=24:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1,\
 scale=3840:2160:flags=bicubic,\
-zoompan=z='1+0.10*on/${FRAMES}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1920x1080:fps=24,\
+zoompan=z='${ZOOM}+0.10*on/${FRAMES}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1920x1080:fps=24,\
 ${GRADE},vignette=angle=PI/4.5,noise=alls=7:allf=t,\
 drawbox=y=0:w=iw:h=${BAR}:color=black:t=fill,drawbox=y=ih-${BAR}:w=iw:h=${BAR}:color=black:t=fill,\
 fade=t=in:st=0:d=1.0,fade=t=out:st=${FADE_OUT}:d=1.2,format=yuv420p[v]"
