@@ -36,3 +36,11 @@ python3 make_ads.py beginners --preview 5  # stills -> output/ads/preview/
 python3 make_voiceover.py                  # voice-over versions (needs kokoro-onnx + models/, see ADS.md)
 python3 make_carousels.py                  # carousels + single-image ads
 ```
+
+## Creator Studio guides
+
+`make_guides.py` writes four PDF guides to `output/guides/`: animation styles, caption styles, effects and filters. Each guide separates what the renderers here already do (with sample frames from the reels) from what could be added on request.
+
+```
+python3 make_guides.py   # needs reportlab and ffmpeg
+```
