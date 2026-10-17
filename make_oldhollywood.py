@@ -49,6 +49,7 @@ ART_SUPERS = [
     (7.0, 14.0, "Somewhere between leaving and arriving."),
     (24.0, 31.0, "The road remembers nothing."),
     (41.0, 48.0, "And still, we go on."),
+    (62.0, 69.0, "Every horizon, a beginning."),
 ]
 
 # Three-strip colour for the ad, red-filtered monochrome for the art cut
@@ -163,8 +164,10 @@ def super_card(path, text):
     y = H - 170
     shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     sd = ImageDraw.Draw(shadow)
-    sd.text((W / 2 + 3, y + 4), text, font=fnt, fill=(0, 0, 0, 200), anchor="ms")
-    shadow = shadow.filter(ImageFilter.GaussianBlur(6))
+    tw = sd.textlength(text, font=fnt)
+    sd.rectangle([W / 2 - tw / 2 - 60, y - 80, W / 2 + tw / 2 + 60, y + 50], fill=(10, 4, 4, 150))
+    sd.text((W / 2 + 3, y + 4), text, font=fnt, fill=(0, 0, 0, 230), anchor="ms")
+    shadow = shadow.filter(ImageFilter.GaussianBlur(18))
     im.alpha_composite(shadow)
     d = ImageDraw.Draw(im)
     d.text((W / 2, y), text, font=fnt, fill=CREAM + (255,), anchor="ms")
@@ -240,6 +243,7 @@ def main():
 
     # 2. Cut together with cards, supers and transitions, then add the film wear
     flen = duration(foot)
+    supers = [sp for sp in supers if sp[1] < flen - 3]   # drop lines past the end of a short clip
     start = TITLE_LEN - XF_IN                 # footage begins here in the timeline
     total = start + flen - XF_OUT + END_LEN
     inputs = ["-loop", "1", "-framerate", str(FPS), "-t", str(TITLE_LEN), "-i", os.path.join(tmp, "title.png"),
@@ -269,7 +273,7 @@ def main():
         f"[{dust_in}:v]format=rgba[dust]",
         f"[{last}][dust]overlay=shortest=0[vd]",
         # halation: a warm glow bleeding around the highlights
-        "[vd]split[a][b]",
+        "[vd]format=gbrp,split[a][b]",
         "[b]gblur=sigma=14" + ("" if art else ",colorchannelmixer=rr=1.0:gg=0.55:bb=0.35") + "[glow]",
         f"[a][glow]blend=all_mode=screen:all_opacity={0.15 if art else 0.22},"
         f"noise=alls={10 if art else 14}:allf=t+u,"
@@ -284,7 +288,7 @@ def main():
     ]
     run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", ";".join(fc),
          "-map", "[vout]", "-map", "[aout]", "-r", str(FPS),
-         "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-tune", "grain",
+         "-c:v", "libx264", "-preset", "medium", "-crf", "24",
          "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", dst])
     print("wrote", dst)
 
