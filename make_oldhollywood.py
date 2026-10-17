@@ -230,16 +230,23 @@ def main():
     dust_frames(tmp)
 
     # 1. Stabilize, crop to Academy ratio and grade
-    run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vf",
-         f"vidstabdetect=shakiness=8:accuracy=15:stepsize=6:result={trf}", "-f", "null", "-"])
     grade = (
         f"vidstabtransform=input={trf}:smoothing=30:optalgo=gauss:optzoom=1:zoom=2:maxangle=0.05:interpol=bicubic,"
         f"crop=ih*{W}/{H}:ih,scale={W}:{H}:flags=lanczos,"
         f"{ART_GRADE if art else AD_GRADE},format=yuv420p"
     )
-    foot = os.path.join(tmp, "foot.mp4")
-    run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vf", grade, "-r", str(FPS), "-an",
-         "-c:v", "libx264", "-preset", "fast", "-crf", "12", foot])
+    foot = os.environ.get("OLDHW_FOOT")      # reuse already-graded footage when re-cutting
+    if not foot:
+        foot = os.path.join(tmp, "foot.mp4")
+        run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vf", f"vidstabdetect=shakiness=8:accuracy=15:stepsize=6:result={trf}",
+             "-f", "null", "-"])
+        run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vf", grade, "-r", str(FPS), "-an",
+             "-c:v", "libx264", "-preset", "fast", "-crf", "12", foot])
+
+    # Phone clips can carry broken AAC packets; decode once to clean PCM
+    wav = os.path.join(tmp, "audio.wav")
+    run(["ffmpeg", "-v", "error", "-y", "-err_detect", "ignore_err", "-i", src, "-vn",
+         "-af", "aresample=async=1:first_pts=0", "-ar", "48000", "-c:a", "pcm_s16le", wav])
 
     # 2. Cut together with cards, supers and transitions, then add the film wear
     flen = duration(foot)
@@ -252,7 +259,7 @@ def main():
     for i in range(len(supers)):
         inputs += ["-loop", "1", "-framerate", str(FPS), "-t", f"{total:.3f}", "-i", os.path.join(tmp, f"super{i}.png")]
     inputs += ["-stream_loop", "-1", "-framerate", str(FPS), "-i", os.path.join(tmp, "dust_%03d.png")]
-    inputs += ["-i", src]
+    inputs += ["-i", wav]
     dust_in = 3 + len(supers)
     audio_in = dust_in + 1
 
@@ -287,7 +294,7 @@ def main():
         f"atrim=duration={total:.3f},pan=mono|c0=c0[aout]",
     ]
     run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", ";".join(fc),
-         "-map", "[vout]", "-map", "[aout]", "-r", str(FPS),
+         "-map", "[vout]", "-map", "[aout]", "-r", str(FPS), "-t", f"{total:.3f}",
          "-c:v", "libx264", "-preset", "medium", "-crf", "24",
          "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", dst])
     print("wrote", dst)
