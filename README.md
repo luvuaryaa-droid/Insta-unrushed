@@ -26,11 +26,16 @@ The story, captions, colours and timings are all in `build()` in `make_video.py`
 
 Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), all from Google Fonts.
 
-## Cinematic stabilized clip
+## Anamorphic stabilized clip
 
-`make_cinematic.py` → `output/cinematic_stabilized.mp4` (1920×1080, 30 fps, full 16:9 frame with no letterbox). It takes a handheld clip, removes the shake and wobble with two-pass vid.stab, and grades it with a nostalgic, diffused, anamorphic-lens look: faded warm print tones, Pro-Mist bloom and halation, blue horizontal highlight streaks, edge softness and colour fringing, a vignette, film grain and fades.
+`make_anamorphic.py` → `output/anamorphic_stabilized.mp4` (1920×1080, 30 fps, full 16:9 frame with no letterbox). It takes a handheld clip, removes the shake and wobble with two-pass vid.stab, and gives it a diffused, nostalgic, anamorphic-lens look:
+
+- **Airy, faded tones:** milky lifted blacks, creamy highlights and soft, muted colour.
+- **Pro-Mist diffusion:** a bloom with a warm halation glow.
+- **Anamorphic lens character:** blue horizontal highlight streaks, horizontally smeared soft edges, colour fringing and a gentle light falloff.
+- **Fine film grain.**
 
 ```
-python3 make_cinematic.py my_clip.mp4                    # needs ffmpeg with libvidstab, numpy, opencv-python-headless
-python3 make_cinematic.py my_clip.mp4 --preview 2 5      # stills -> output/preview/
+python3 make_anamorphic.py my_clip.mp4                   # needs ffmpeg with libvidstab, numpy, opencv-python-headless
+python3 make_anamorphic.py my_clip.mp4 --preview 2 5     # stills -> output/preview/
 ```
