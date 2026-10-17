@@ -25,3 +25,18 @@ python3 make_video.py --preview 3 20  # stills at the given seconds -> output/pr
 The story, captions, colours and timings are all in `build()` in `make_video.py`.
 
 Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), all from Google Fonts.
+
+## Road clip edits
+
+Edits of the road-trip footage, all stabilized (two-pass vidstab):
+
+- `output/road_cinematic.mp4`: modern widescreen look (2.39:1, teal and orange). Made with `make_cinematic.sh`.
+- `output/road_oldhollywood.mp4`: a 1950s colour commercial in the 1.37:1 Academy frame, with art deco title and end cards, taglines and an iris-out ending.
+- `output/road_artfilm.mp4` and `output/road2_artfilm.mp4`: black-and-white art-house cuts, slowed to two-thirds speed, with poetic intertitles.
+
+```
+python3 make_oldhollywood.py clip.mp4 [out.mp4]         # old Hollywood ad
+python3 make_oldhollywood.py --art clip.mp4 [out.mp4]   # art film
+```
+
+Added fonts: Limelight and Playfair Display SC (SIL OFL).
