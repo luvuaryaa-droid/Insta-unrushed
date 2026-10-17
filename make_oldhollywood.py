@@ -176,7 +176,10 @@ def super_card(path, text):
     im.save(path)
 
 
-def dust_frames(folder, n=48, seed=7):
+DUST_FRAMES = 48
+
+
+def dust_frames(folder, n=DUST_FRAMES, seed=7):
     """Transparent overlays with specks, hairs and the odd vertical scratch."""
     rnd = random.Random(seed)
     scratch_x = rnd.uniform(0.2, 0.8) * W
@@ -258,10 +261,9 @@ def main():
               "-loop", "1", "-framerate", str(FPS), "-t", str(END_LEN), "-i", os.path.join(tmp, "end.png")]
     for i in range(len(supers)):
         inputs += ["-loop", "1", "-framerate", str(FPS), "-t", f"{total:.3f}", "-i", os.path.join(tmp, f"super{i}.png")]
-    inputs += ["-stream_loop", "-1", "-framerate", str(FPS), "-i", os.path.join(tmp, "dust_%03d.png")]
-    inputs += ["-i", wav]
+    loops = int(total * FPS / DUST_FRAMES) + 1
+    inputs += ["-stream_loop", str(loops), "-framerate", str(FPS), "-i", os.path.join(tmp, "dust_%03d.png")]
     dust_in = 3 + len(supers)
-    audio_in = dust_in + 1
 
     fc = [
         "[0:v]fps=24,settb=1/24,format=yuv420p,setsar=1[t]",
@@ -286,17 +288,28 @@ def main():
         f"noise=alls={10 if art else 14}:allf=t+u,"
         "eq=brightness='0.018*sin(t*41)+0.012*sin(t*97+1.3)':eval=frame,"
         f"vignette=angle=PI/4,fade=t=in:st=0:d=0.8,fade=t=out:st={total - 1.2:.3f}:d=1.2,"
-        f"trim=duration={total:.3f},pad=1920:1080:(ow-iw)/2:0:black,format=yuv420p[vout]",
-        # sound: the road ambience thinned out like an optical track, plus a little crackle
-        f"[{audio_in}:a]{f'atempo={1 / ART_SLOW:.4f},lowpass=f=1800,volume=0.9,' if art else 'highpass=f=280,lowpass=f=3800,volume=0.7,'}adelay={int(start * 1000)}:all=1,apad[road]",
-        "anoisesrc=color=pink:amplitude=0.02:sample_rate=48000,highpass=f=900,lowpass=f=6000[crackle]",
-        f"[road][crackle]amix=inputs=2:normalize=0,afade=t=in:d=0.8,afade=t=out:st={total - 1.5:.3f}:d=1.5,"
+        "pad=1920:1080:(ow-iw)/2:0:black,format=yuv420p[vout]",
+    ]
+    picture = os.path.join(tmp, "picture.mp4")
+    run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", ";".join(fc), "-map", "[vout]",
+         "-r", str(FPS), "-frames:v", str(int(round(total * FPS))),
+         "-c:v", "libx264", "-preset", "medium", "-crf", "24", picture])
+
+    # sound: the road ambience thinned out like an optical track, plus a little crackle
+    afc = [
+        # the delay goes before atempo: atempo followed by adelay breaks the timestamps
+        f"[0:a]adelay={int(start * 1000 / (ART_SLOW if art else 1))}:all=1,"
+        f"{f'atempo={1 / ART_SLOW:.4f},lowpass=f=1800,volume=0.9' if art else 'highpass=f=280,lowpass=f=3800,volume=0.7'},apad[road]",
+        f"anoisesrc=color=pink:amplitude=0.02:sample_rate=48000:duration={total + 1:.3f},highpass=f=900,lowpass=f=6000[crackle]",
+        f"[road][crackle]amix=inputs=2:normalize=0:duration=shortest,afade=t=in:d=0.8,afade=t=out:st={total - 1.5:.3f}:d=1.5,"
         f"atrim=duration={total:.3f},pan=mono|c0=c0[aout]",
     ]
-    run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", ";".join(fc),
-         "-map", "[vout]", "-map", "[aout]", "-r", str(FPS), "-t", f"{total:.3f}",
-         "-c:v", "libx264", "-preset", "medium", "-crf", "24",
-         "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", dst])
+    sound = os.path.join(tmp, "sound.m4a")
+    run(["ffmpeg", "-v", "error", "-y", "-i", wav, "-filter_complex", ";".join(afc), "-map", "[aout]",
+         "-c:a", "aac", "-b:a", "128k", sound])
+
+    run(["ffmpeg", "-v", "error", "-y", "-i", picture, "-i", sound, "-map", "0:v", "-map", "1:a",
+         "-c", "copy", "-shortest", "-movflags", "+faststart", dst])
     print("wrote", dst)
 
 
