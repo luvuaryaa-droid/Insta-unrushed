@@ -253,9 +253,9 @@ def main():
     audio_in = dust_in + 1
 
     fc = [
-        "[0:v]format=yuv420p,setsar=1[t]",
-        "[1:v]format=yuv420p,setsar=1[f]",
-        "[2:v]format=yuv420p,setsar=1[e]",
+        "[0:v]fps=24,settb=1/24,format=yuv420p,setsar=1[t]",
+        "[1:v]fps=24,settb=1/24,format=yuv420p,setsar=1[f]",
+        "[2:v]fps=24,settb=1/24,format=yuv420p,setsar=1[e]",
         f"[t][f]xfade=transition=fade:duration={XF_IN}:offset={start:.3f}[tf]",
         f"[tf][e]xfade=transition={'fadeblack' if art else 'circleclose'}:duration={XF_OUT}:offset={start + flen - XF_OUT:.3f}[v0]",
     ]
