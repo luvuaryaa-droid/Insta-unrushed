@@ -4,6 +4,9 @@
 # Usage: ./grade_clip.sh [options] input.mp4 output.mp4
 #   --warm          stronger warm (golden) colour temperature
 #   --vintage       vintage warm: amber cast, faded blacks, muted colour, more grain
+#   --clean         grain-free soft film: denoised, peach highlights, teal-ish
+#                   shadows, stronger glow (overrides --warm / --vintage)
+#   --width W       scale output to W pixels wide (e.g. 1080)
 #   --no-bars       skip the 2.39:1 letterbox bars
 #   --views "T..."  keep only --len seconds starting at each time T (one per
 #                   view/shot); T:L keeps L seconds for that view instead. Each
@@ -11,11 +14,13 @@
 #   --len N         seconds kept per view (default 4)
 set -euo pipefail
 
-WARM=0; VINTAGE=0; BARS=1; VIEWS=""; LEN=4
+WARM=0; VINTAGE=0; CLEAN=0; WIDTH=""; BARS=1; VIEWS=""; LEN=4
 while [[ $# -gt 2 ]]; do
   case "$1" in
     --warm) WARM=1; shift ;;
     --vintage) VINTAGE=1; shift ;;
+    --clean) CLEAN=1; shift ;;
+    --width) WIDTH="$2"; shift 2 ;;
     --no-bars) BARS=0; shift ;;
     --views) VIEWS="$2"; shift 2 ;;
     --len) LEN="$2"; shift 2 ;;
@@ -26,8 +31,12 @@ IN="$1"; OUT="$2"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-SAT=0.88; GRAIN=8
-if [[ $VINTAGE == 1 ]]; then
+SAT=0.88; GRAIN=8; GLOW=0.30; PRE=""
+if [[ $CLEAN == 1 ]]; then
+  CURVES="r='0/0.05 0.25/0.26 0.5/0.53 0.8/0.84 1/0.98':g='0/0.06 0.5/0.51 1/0.95':b='0/0.10 0.25/0.27 0.5/0.48 1/0.88'"
+  BALANCE="rs=-0.02:gs=0.01:bs=0.04:rh=0.06:gh=0.02:bh=-0.04"
+  SAT=0.90; GLOW=0.38; PRE="hqdn3d=3:2:4:3,"; GRAIN=0
+elif [[ $VINTAGE == 1 ]]; then
   CURVES="r='0/0.10 0.5/0.57 1/0.97':g='0/0.08 0.5/0.52 1/0.93':b='0/0.07 0.5/0.42 1/0.78'"
   BALANCE="rs=0.05:gs=0.02:bs=-0.04:rm=0.05:gm=0.01:bm=-0.06:rh=0.06:gh=0.03:bh=-0.08"
   SAT=0.78; GRAIN=11
@@ -51,17 +60,17 @@ grade() {
   ffmpeg -v error -y "$@" -i "$src" -vf "vidstabdetect=shakiness=8:accuracy=15:result=$trf" -f null -
   # Pass 2: stabilise (heavy smoothing), soft bloom, faded film grade,
   # vignette, grain, optional letterbox bars.
-  local fc="[0:v]vidstabtransform=input=$trf:smoothing=45:optzoom=1:zoomspeed=0.2:interpol=bicubic,unsharp=5:5:0.3,
+  local fc="[0:v]vidstabtransform=input=$trf:smoothing=45:optzoom=1:zoomspeed=0.2:interpol=bicubic,${PRE}unsharp=5:5:0.3,
 format=gbrp,split[a][b];
 [b]gblur=sigma=20,curves=all='0/0 0.55/0.7 1/1'[glow];
-[a][glow]blend=all_mode=screen:all_opacity=0.30,
+[a][glow]blend=all_mode=screen:all_opacity=$GLOW,
 curves=$CURVES,
 eq=saturation=$SAT:contrast=1.06:gamma=1.04,
 colorbalance=$BALANCE,
 vignette=angle=PI/5:mode=forward,
-noise=alls=$GRAIN:allf=t,
+$( ((GRAIN)) && echo "noise=alls=$GRAIN:allf=t," )
 $BOXES
-format=yuv420p[v]"
+${WIDTH:+scale=$WIDTH:-2:flags=lanczos,}format=yuv420p[v]"
   ffmpeg -v error -y "$@" -i "$src" -filter_complex "$fc" -map "[v]" -map 0:a? \
     -c:v libx264 -crf 19 -preset slow -c:a aac -b:a 192k -ar 48000 -movflags +faststart "$dst"
 }
