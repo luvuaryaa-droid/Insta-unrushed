@@ -3,16 +3,19 @@
 #
 # Usage: ./grade_clip.sh [options] input.mp4 output.mp4
 #   --warm          stronger warm (golden) colour temperature
+#   --vintage       vintage warm: amber cast, faded blacks, muted colour, more grain
 #   --no-bars       skip the 2.39:1 letterbox bars
 #   --views "T..."  keep only --len seconds starting at each time T (one per
-#                   view/shot); each piece is stabilised on its own, then joined
+#                   view/shot); T:L keeps L seconds for that view instead. Each
+#                   piece is stabilised on its own, then joined
 #   --len N         seconds kept per view (default 4)
 set -euo pipefail
 
-WARM=0; BARS=1; VIEWS=""; LEN=4
+WARM=0; VINTAGE=0; BARS=1; VIEWS=""; LEN=4
 while [[ $# -gt 2 ]]; do
   case "$1" in
     --warm) WARM=1; shift ;;
+    --vintage) VINTAGE=1; shift ;;
     --no-bars) BARS=0; shift ;;
     --views) VIEWS="$2"; shift 2 ;;
     --len) LEN="$2"; shift 2 ;;
@@ -23,7 +26,12 @@ IN="$1"; OUT="$2"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-if [[ $WARM == 1 ]]; then
+SAT=0.88; GRAIN=8
+if [[ $VINTAGE == 1 ]]; then
+  CURVES="r='0/0.10 0.5/0.57 1/0.97':g='0/0.08 0.5/0.52 1/0.93':b='0/0.07 0.5/0.42 1/0.78'"
+  BALANCE="rs=0.05:gs=0.02:bs=-0.04:rm=0.05:gm=0.01:bm=-0.06:rh=0.06:gh=0.03:bh=-0.08"
+  SAT=0.78; GRAIN=11
+elif [[ $WARM == 1 ]]; then
   CURVES="r='0/0.07 0.5/0.56 1/1':g='0/0.05 0.5/0.51 1/0.96':b='0/0.06 0.5/0.44 1/0.84'"
   BALANCE="rs=0.05:gs=0.01:bs=-0.02:rm=0.04:bm=-0.04:rh=0.07:gh=0.02:bh=-0.07"
 else
@@ -48,10 +56,10 @@ format=gbrp,split[a][b];
 [b]gblur=sigma=20,curves=all='0/0 0.55/0.7 1/1'[glow];
 [a][glow]blend=all_mode=screen:all_opacity=0.30,
 curves=$CURVES,
-eq=saturation=0.88:contrast=1.06:gamma=1.04,
+eq=saturation=$SAT:contrast=1.06:gamma=1.04,
 colorbalance=$BALANCE,
 vignette=angle=PI/5:mode=forward,
-noise=alls=8:allf=t,
+noise=alls=$GRAIN:allf=t,
 $BOXES
 format=yuv420p[v]"
   ffmpeg -v error -y "$@" -i "$src" -filter_complex "$fc" -map "[v]" -map 0:a? \
@@ -66,10 +74,12 @@ fi
 # One piece per view, with short audio fades so the cuts don't click.
 : > "$TMP/list.txt"
 i=0
-for t in $VIEWS; do
+for v in $VIEWS; do
+  t="${v%%:*}"; len="$LEN"
+  [[ $v == *:* ]] && len="${v#*:}"
   piece="$TMP/view$i.mp4"
-  ffmpeg -v error -y -ss "$t" -t "$LEN" -i "$IN" \
-    -af "afade=t=in:d=0.08,afade=t=out:st=$(echo "$LEN - 0.08" | bc):d=0.08" \
+  ffmpeg -v error -y -ss "$t" -t "$len" -i "$IN" \
+    -af "afade=t=in:d=0.08,afade=t=out:st=$(echo "$len - 0.08" | bc):d=0.08" \
     -c:v libx264 -crf 12 -preset fast -c:a pcm_s16le "$TMP/cut$i.mkv"
   grade "$TMP/cut$i.mkv" "$piece"
   echo "file '$piece'" >> "$TMP/list.txt"
