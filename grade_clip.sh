@@ -6,6 +6,8 @@
 #   --vintage       vintage warm: amber cast, faded blacks, muted colour, more grain
 #   --clean         grain-free soft film: denoised, peach highlights, teal-ish
 #                   shadows, stronger glow (overrides --warm / --vintage)
+#   --hollywood     grain-free blockbuster teal & orange: deeper contrast, teal
+#                   shadows, orange highlights, soft glow (overrides the above)
 #   --width W       scale output to W pixels wide (e.g. 1080)
 #   --no-bars       skip the 2.39:1 letterbox bars
 #   --views "T..."  keep only --len seconds starting at each time T (one per
@@ -14,12 +16,13 @@
 #   --len N         seconds kept per view (default 4)
 set -euo pipefail
 
-WARM=0; VINTAGE=0; CLEAN=0; WIDTH=""; BARS=1; VIEWS=""; LEN=4
+WARM=0; VINTAGE=0; CLEAN=0; HOLLY=0; WIDTH=""; BARS=1; VIEWS=""; LEN=4
 while [[ $# -gt 2 ]]; do
   case "$1" in
     --warm) WARM=1; shift ;;
     --vintage) VINTAGE=1; shift ;;
     --clean) CLEAN=1; shift ;;
+    --hollywood) HOLLY=1; shift ;;
     --width) WIDTH="$2"; shift 2 ;;
     --no-bars) BARS=0; shift ;;
     --views) VIEWS="$2"; shift 2 ;;
@@ -31,8 +34,14 @@ IN="$1"; OUT="$2"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-SAT=0.88; GRAIN=8; GLOW=0.30; PRE=""
-if [[ $CLEAN == 1 ]]; then
+SAT=0.88; GRAIN=8; GLOW=0.30; PRE=""; CONTRAST=1.06; SEL=""
+if [[ $HOLLY == 1 ]]; then
+  CURVES="r='0/0.02 0.25/0.21 0.5/0.52 0.75/0.81 1/1':g='0/0.04 0.25/0.24 0.5/0.50 0.75/0.77 1/0.97':b='0/0.12 0.25/0.31 0.5/0.50 0.75/0.74 1/0.94'"
+  BALANCE="rs=-0.11:gs=0.01:bs=0.10:rm=-0.02:bm=0.02:rh=0.07:gh=0.01:bh=-0.05"
+  SAT=1.0; GLOW=0.30; PRE="hqdn3d=3:2:4:3,"; GRAIN=0; CONTRAST=1.10
+  # Greens and shadows lean teal, yellows lean orange.
+  SEL="selectivecolor=greens='0.30 0 -0.25 0':yellows='-0.10 0.12 0 0':blacks='0.12 0 -0.08 0',"
+elif [[ $CLEAN == 1 ]]; then
   CURVES="r='0/0.05 0.25/0.26 0.5/0.53 0.8/0.84 1/0.98':g='0/0.06 0.5/0.51 1/0.95':b='0/0.10 0.25/0.27 0.5/0.48 1/0.88'"
   BALANCE="rs=-0.02:gs=0.01:bs=0.04:rh=0.06:gh=0.02:bh=-0.04"
   SAT=0.90; GLOW=0.38; PRE="hqdn3d=3:2:4:3,"; GRAIN=0
@@ -65,8 +74,9 @@ format=gbrp,split[a][b];
 [b]gblur=sigma=20,curves=all='0/0 0.55/0.7 1/1'[glow];
 [a][glow]blend=all_mode=screen:all_opacity=$GLOW,
 curves=$CURVES,
-eq=saturation=$SAT:contrast=1.06:gamma=1.04,
+eq=saturation=$SAT:contrast=$CONTRAST:gamma=1.04,
 colorbalance=$BALANCE,
+$SEL
 vignette=angle=PI/5:mode=forward,
 $( ((GRAIN)) && echo "noise=alls=$GRAIN:allf=t," )
 $BOXES
