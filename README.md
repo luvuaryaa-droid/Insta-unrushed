@@ -25,3 +25,20 @@ python3 make_video.py --preview 3 20  # stills at the given seconds -> output/pr
 The story, captions, colours and timings are all in `build()` in `make_video.py`.
 
 Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), all from Google Fonts.
+
+## Cinematic nature reel
+
+`make_reel.py` → `output/final.mp4` (1080×1350 4:5, 30 fps, H.264, 1:58) is made from `footage/VID_20261014_232420.mp4`.
+
+- **Grade:** a teal-orange matte film look. Skies and shadows go teal, skin and warm colours stay orange, greens shift toward olive, overall saturation is 15 % lower, blacks are lifted and contrast is soft. The grade is generated as a 3D LUT by `grade.py`. A `--lut file.cube` is applied before it.
+- **Effects:** a 2 s black title card, 50 % slow-motion (motion-interpolated) on the swan and orange-flower shots, a 5-piece flash-cut burst (~0.15 s slices) from the feet shot, a 1.5 s fade to black and a 2 s end card.
+
+```
+python3 make_reel.py                                  # 4:5 -> output/final.mp4
+python3 make_reel.py --aspect 9:16                    # Reels 1080x1920
+python3 make_reel.py --aspect 5:4                     # 1280x1024
+python3 make_reel.py --title "slow days" --handle @me --logo logo.png \
+                     --slow swan clouds --burst railing --lut film.cube
+```
+
+Shot names for `--slow` / `--burst`: swan, duck, pond, white_flowers, purple_flower_1, purple_flower_2, orange_flower, tree_tunnel, feet, clouds, railing, street.
