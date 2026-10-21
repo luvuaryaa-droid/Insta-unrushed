@@ -1,4 +1,21 @@
-# Insta-unrushed: weekly sketchbook tour
+# Insta-unrushed
+
+## Art for Anxious Days, Vol. 1 (shop product)
+
+A digital art zine made from the sketchbook pages, sold in two tiers. Everything is in `product/`:
+
+| File | What it is | Tier |
+|---|---|---|
+| `art_for_anxious_days_vol1.pdf` | The zine: 16 A5 pages (cover, letter, 11 drawings with a note and a "try this" prompt, breathing page, journal page, thank-you/Vol. 2 page) | ₹299 |
+| `print_pack/prints_A4.pdf` | 11 frameable A4 prints, 300 dpi | ₹499 adds |
+| `print_pack/wallpapers/` | 11 phone wallpapers, 1080×1920 | ₹499 adds |
+| `promo/slide_1..4.jpg` + `promo/launch_caption.txt` | Instagram launch carousel (1080×1350) and caption | – |
+| `listing.md` | Copy to paste into the shop page (title, description, FAQ, which files to upload) | – |
+| `cover.jpg` | Product thumbnail | – |
+
+Rebuild with `python3 make_zine.py` (add `--pages` to also dump page JPEGs to `product/pages/`). All the text (titles, notes, prompts) is in `PIECES` and the page functions at the top of `make_zine.py`.
+
+# Weekly sketchbook tour reel
 
 There are two versions of this week's reel:
 
