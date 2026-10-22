@@ -1,5 +1,18 @@
 # Insta-unrushed: weekly sketchbook tour
 
+## "The noise / what it quietened into" (two-page reel)
+
+`make_noise_quiet.py` → `output/noise_to_quiet.mp4` (1080×1920, 33 s, 30 fps, silent audio track for adding music in Instagram).
+
+- 0–7 s: the neon fish page as racing, shaky punch-in cuts that slowly settle ("My mind was racing." / "Left page: the noise.").
+- 7–13 s: a blank sheet, then the ink flower page drawn on from its centre outwards.
+- 13–22 s: slow close-ups on the loops, dashes and circles ("Over and over.").
+- 22–33 s: the photo of the open spread with both page labels, then the closing card ("Patterns are enough." with a little sprig).
+
+Also: `output/noise_to_quiet_cover.jpg` (cover frame) and `output/noise_to_quiet_caption.txt`. Source pages are `artworks/noise_fish.jpg`, `artworks/quiet_flower.jpg` and `artworks/noise_quiet_spread.jpg`. Previews: `python3 make_noise_quiet.py --preview 2 9 20`.
+
+## Earlier reels
+
 There are two versions of this week's reel:
 
 1. **3D flip-book** (`make_flipbook.py` → `output/sketchbook_flipbook.mp4`, 59 s, 30 fps): an open sketchbook floats in a snowy night scene and flips through the pages, with big white hand-lettered captions. To float the book over your own footage instead of the drawn scene, run `python3 make_flipbook.py --bg my_clip.mp4`.
