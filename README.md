@@ -25,3 +25,13 @@ python3 make_video.py --preview 3 20  # stills at the given seconds -> output/pr
 The story, captions, colours and timings are all in `build()` in `make_video.py`.
 
 Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), all from Google Fonts.
+
+## Style menu
+
+`style-menu/index.html` is a page for choosing how the Reels look. Every caption style, title animation, font mood, colour palette, design style and film look plays on a sample painting (the clips are in `style-menu/clips/`). Tap "Use this" on one style per section, then press "Copy for Claude" and paste the sentence it gives you.
+
+To open it, double-click `style-menu/index.html`, or serve the folder locally:
+
+```
+cd style-menu && python3 -m http.server 8000   # then visit http://localhost:8000
+```
