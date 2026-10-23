@@ -14,7 +14,7 @@ import sys
 from multiprocessing import Pool
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "artworks", "pencil_portrait")
@@ -57,10 +57,29 @@ def typewriter(size):
 FINAL_CROP = (240, 240, 2490, 3400)
 
 
+def enhance(im, gamma=1.15, depth=1.25, sat=0.85):
+    """Lift the dim phone photos without blowing out the paper: stretch levels on
+    brightness, brighten the midtones, deepen the graphite lines, calm the warm cast."""
+    rgb = np.asarray(im).astype(np.float32)
+    lum = rgb @ np.array([0.299, 0.587, 0.114], np.float32)
+    lo, hi = np.percentile(lum, (0.5, 99.8))
+    x = np.clip((lum - lo) / (hi - lo), 0, 1)
+    x = x ** (1 / gamma)                       # brighter midtones, whites stay put
+    x = np.where(x < 0.5, 0.5 * (2 * x) ** depth, 1 - 0.5 * (2 * (1 - x)) ** depth)  # gentle S-curve
+    out_l = x * 255
+    ratio = (out_l / np.maximum(lum, 1))[..., None]
+    out = rgb * ratio
+    grey = out_l[..., None]
+    out = grey + (out - grey) * sat
+    im = Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
+    return ImageEnhance.Sharpness(im).enhance(1.6)
+
+
 def load_photo(path):
     im = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
     if os.path.basename(path) == "final.jpg":
         im = im.crop(FINAL_CROP)
+    im = enhance(im)
     # a little extra resolution so the slow push-in stays sharp
     return ImageOps.fit(im, (int(PHOTO_W * 1.08), int(PHOTO_H * 1.08)), Image.LANCZOS)
 
