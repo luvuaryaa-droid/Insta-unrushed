@@ -1,5 +1,9 @@
 # Insta-unrushed: weekly sketchbook tour
 
+## Pencil portrait progress reel
+
+`make_pencil_reel.py` → `output/pencil_portrait_reel.mp4` (1080×1920, 21.5 s, 30 fps, silent audio track). The 11 work-in-progress photos (`artworks/pencil_portrait/step_*.jpg`) dissolve into each other like a time-lapse with a step counter, then the finished drawing (`final.jpg`) is shown. Cover: `output/pencil_cover.jpg`; caption: `output/pencil_instagram_caption.txt`. Re-render with `python3 make_pencil_reel.py`, or `--preview 1 9` for stills.
+
 There are two versions of this week's reel:
 
 1. **3D flip-book** (`make_flipbook.py` → `output/sketchbook_flipbook.mp4`, 59 s, 30 fps): an open sketchbook floats in a snowy night scene and flips through the pages, with big white hand-lettered captions. To float the book over your own footage instead of the drawn scene, run `python3 make_flipbook.py --bg my_clip.mp4`.
