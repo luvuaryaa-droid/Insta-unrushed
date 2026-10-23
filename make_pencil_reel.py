@@ -14,7 +14,7 @@ import sys
 from multiprocessing import Pool
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont, ImageOps
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "artworks", "pencil_portrait")
@@ -54,7 +54,7 @@ def typewriter(size):
 
 
 # the finished scan has a thin white border with rounded corners; keep only the drawing
-FINAL_CROP = (50, 40, 1698, 2237)   # 3:4, trimmed from the bottom so the hair bun stays in
+FINAL_CROP = (50, 50, 1698, 2585)
 
 
 def enhance(im, gamma=1.15, depth=1.25, sat=0.85):
@@ -78,9 +78,9 @@ def enhance(im, gamma=1.15, depth=1.25, sat=0.85):
 def load_photo(path):
     im = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
     if os.path.basename(path) == "final.jpg":
-        im = im.crop(FINAL_CROP)    # already edited, so no auto-enhance
-    else:
-        im = enhance(im)
+        # already edited, so no auto-enhance; kept whole and framed in final_frame()
+        return im.crop(FINAL_CROP)
+    im = enhance(im)
     # a little extra resolution so the slow push-in stays sharp
     return ImageOps.fit(im, (int(PHOTO_W * 1.08), int(PHOTO_H * 1.08)), Image.LANCZOS)
 
@@ -147,21 +147,34 @@ def setup():
     names = build()
     PHOTOS = [load_photo(os.path.join(SRC, n)) for n in names]
     BG = Image.fromarray(paper_background())
+    PHOTOS[-1] = final_frame(PHOTOS[-1])
     sh = Image.new("L", (W, H), 0)
     ImageDraw.Draw(sh).rectangle([(W - PHOTO_W) // 2 + 6, PHOTO_Y + 14,
                                   (W + PHOTO_W) // 2 + 6, PHOTO_Y + PHOTO_H + 14], fill=90)
-    from PIL import ImageFilter
     SHADOW = sh.filter(ImageFilter.GaussianBlur(18))
 
 
+def final_frame(im):
+    """The whole finished drawing, fitted inside the photo area on the paper
+    background with its own shadow, so it can dissolve in like the other shots."""
+    im = ImageOps.contain(im, (PHOTO_W, PHOTO_H), Image.LANCZOS)
+    x0, y0 = (W - im.width) // 2, PHOTO_Y + (PHOTO_H - im.height) // 2
+    page = BG.copy()
+    sh = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(sh).rectangle([x0 + 6, y0 + 14, x0 + im.width + 6, y0 + im.height + 14], fill=90)
+    page.paste((0, 0, 0), (0, 0), sh.filter(ImageFilter.GaussianBlur(18)))
+    page.paste(im, (x0, y0))
+    return page
+
+
 def photo_at(idx, local_t, span):
-    """Slow push-in over the life of the shot."""
+    """Slow push-in over the life of the shot; the finished drawing stays whole and still."""
+    if idx == len(PHOTOS) - 1:
+        return PHOTOS[idx]
     im = PHOTOS[idx]
     z = 1.08 - 0.06 * min(local_t / span, 1.0)
     cw, ch = int(PHOTO_W * z), int(PHOTO_H * z)
     x0, y0 = (im.width - cw) // 2, (im.height - ch) // 2
-    if idx == len(PHOTOS) - 1:
-        y0 = 0                      # keep the top of the hair bun in frame
     return im.crop((x0, y0, x0 + cw, y0 + ch)).resize((PHOTO_W, PHOTO_H), Image.BILINEAR)
 
 
@@ -175,11 +188,16 @@ def render_frame(frame):
         if s <= t < e:
             fade = FINAL_FADE if idx == len(PHOTOS) - 1 else FADE
             a = 1.0 if k == 0 else ease((t - s) / fade)
-            layers.append((photo_at(idx, t - s, e - s), a))
-    photo = None
-    for im, a in layers:
-        photo = im if photo is None or a >= 1 else Image.blend(photo, im, a)
-    canvas.paste(photo, ((W - PHOTO_W) // 2, PHOTO_Y))
+            layers.append((idx, photo_at(idx, t - s, e - s), a))
+    for idx, im, a in layers:
+        if idx == len(PHOTOS) - 1:      # full-frame page with the finished drawing
+            canvas = im if a >= 1 else Image.blend(canvas, im, a)
+            continue
+        if a < 1:
+            under = canvas.crop(((W - PHOTO_W) // 2, PHOTO_Y, (W + PHOTO_W) // 2, PHOTO_Y + PHOTO_H))
+            im = Image.blend(under, im, a)
+        canvas.paste(im, ((W - PHOTO_W) // 2, PHOTO_Y))
+    canvas = canvas.copy()
 
     # handwritten caption, cross-fading between lines
     for s, e, text in CAPTIONS:
