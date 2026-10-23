@@ -53,8 +53,8 @@ def typewriter(size):
     return ImageFont.truetype(os.path.join(FONTS, "SpecialElite-Regular.ttf"), size)
 
 
-# the finished scan sits on a white mat with rounded corners; keep only the drawing
-FINAL_CROP = (240, 240, 2490, 3400)
+# the finished scan has a thin white border with rounded corners; keep only the drawing
+FINAL_CROP = (50, 40, 1698, 2237)   # 3:4, trimmed from the bottom so the hair bun stays in
 
 
 def enhance(im, gamma=1.15, depth=1.25, sat=0.85):
@@ -78,8 +78,9 @@ def enhance(im, gamma=1.15, depth=1.25, sat=0.85):
 def load_photo(path):
     im = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
     if os.path.basename(path) == "final.jpg":
-        im = im.crop(FINAL_CROP)
-    im = enhance(im)
+        im = im.crop(FINAL_CROP)    # already edited, so no auto-enhance
+    else:
+        im = enhance(im)
     # a little extra resolution so the slow push-in stays sharp
     return ImageOps.fit(im, (int(PHOTO_W * 1.08), int(PHOTO_H * 1.08)), Image.LANCZOS)
 
@@ -159,6 +160,8 @@ def photo_at(idx, local_t, span):
     z = 1.08 - 0.06 * min(local_t / span, 1.0)
     cw, ch = int(PHOTO_W * z), int(PHOTO_H * z)
     x0, y0 = (im.width - cw) // 2, (im.height - ch) // 2
+    if idx == len(PHOTOS) - 1:
+        y0 = 0                      # keep the top of the hair bun in frame
     return im.crop((x0, y0, x0 + cw, y0 + ch)).resize((PHOTO_W, PHOTO_H), Image.BILINEAR)
 
 
