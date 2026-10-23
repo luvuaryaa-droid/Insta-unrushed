@@ -7,7 +7,7 @@ There are two versions of this week's reel:
 
 ## Books that inspired me
 
-A separate papercut reel (`make_books.py` → `output/books_reel.mp4`, 1080×1920, 45.5 s). It has one scene per book, each with a paper cover and a note on what the book gave me, and it ends on a stack of all seven spines. The covers are hand-made stand-ins, not the real jackets. The cover frame is in `output/books_cover.jpg` and the post caption is in `output/books_caption.txt`. To change a title, colour or note, edit `BOOKS` in `make_books.py`, then run `python3 make_books.py`. Use `--preview` to render stills only.
+A separate papercut reel (`make_books.py` → `output/books_reel.mp4`, 1080×1920, 53 s). It has one scene per author. Their book covers (photos in `covers/`) drop in with tape, and a note says what the books gave me. It ends on a stack of spines, one per author. Rick Rubin and Jessica Swift don't have cover photos yet, so they get paper stand-in covers; to use a photo instead, drop it in `covers/` and put its filename in that author's list. The cover frame is in `output/books_cover.jpg` and the post caption is in `output/books_caption.txt`. To change authors, books or notes, edit `AUTHORS` in `make_books.py`, then run `python3 make_books.py`. Use `--preview` to render stills only.
 
 ## Papercut version
 
