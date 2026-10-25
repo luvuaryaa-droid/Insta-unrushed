@@ -25,3 +25,7 @@ python3 make_video.py --preview 3 20  # stills at the given seconds -> output/pr
 The story, captions, colours and timings are all in `build()` in `make_video.py`.
 
 Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), all from Google Fonts.
+
+## Landing page
+
+`landing/index.html` is the sales page for the Video Editing Skill: one self-contained file with no build step. Open it in a browser or upload it to any static host (GitHub Pages, Netlify). Fill in the payment link, bundle link and contact email in the `CONFIG` block near the bottom of the file.
