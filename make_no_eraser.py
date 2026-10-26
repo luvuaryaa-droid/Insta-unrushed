@@ -5,6 +5,11 @@ Black ink background (no paper/beige), white hand-lettered captions that "write"
 themselves in, red accents for the key words. The artwork photos are shown in
 neutral greyscale so the warm paper tone never reads as beige.
 
+The voice-over (audio/no_eraser_voice_raw.mp3) is cut down to the spoken phrases
+listed in PHRASES: dead air, the off-script aside and long pauses are dropped,
+pauses are re-spaced, then the voice is denoised, compressed and loudness-normalised.
+Each phrase is also the caption shown while it is spoken.
+
 Usage:  python3 make_no_eraser.py               # renders output/no_eraser.mp4
         python3 make_no_eraser.py --preview 3 9 # stills at the given seconds -> output/preview/
 """
@@ -25,7 +30,12 @@ OUT = os.path.join(ROOT, "output")
 
 W, H = 1080, 1920
 FPS = 30
-DURATION = 50.0
+DURATION = 50.0       # set by build() from the edited voice length
+VOICE_RAW = os.path.join(ROOT, "audio", "no_eraser_voice_raw.mp3")
+VOICE_OUT = os.path.join(OUT, "no_eraser_voice.wav")
+SR = 48000
+VOICE_START = 3.4     # the hook plays before the voice comes in
+OUTRO = 6.0
 
 INK_BLACK = (14, 14, 16)
 CHALK = (246, 246, 244)
@@ -219,7 +229,7 @@ class Caption:
     """A block of lines that 'write' in left-to-right, then fade out."""
 
     def __init__(self, text, t0, t1, y, size=82, font=None, align="center", mark=None,
-                 cps=34.0, color=CHALK, line_gap=1.08):
+                 cps=34.0, color=CHALK, line_gap=1.08, write_in=None):
         self.font = font or caveat(size)
         self.lines = render_lines(text, self.font, color=color)
         self.t0, self.t1, self.y, self.align, self.mark = t0, t1, y, align, mark
@@ -231,6 +241,10 @@ class Caption:
             dur = max(0.35, im.width / (self.cps * self.font.size * 0.45))
             self.sched.append((t, dur))
             t += dur + 0.06
+        if write_in and t - t0 > write_in:          # squeeze writing to finish within the spoken phrase
+            k = write_in / (t - t0)
+            self.sched = [(t0 + (ts - t0) * k, d * k) for ts, d in self.sched]
+            t = t0 + write_in
         self.written = t
         self.marks = []
         if mark:
@@ -339,66 +353,119 @@ class Eraser:
             d.line([(cx + x, cy + y) for x, y in pts[:n]], fill=col, width=20, joint="curve")
 
 
+
+# --------------------------------------------------------------------------- voice
+
+# (start, end) in the raw recording, caption text, caption mark, pause after (s).
+# Timings come from a silence/transcript pass over the raw take. Everything not
+# listed is cut: 13 s of lead-in noise, the aside at 26.9-28.5 s and the tail.
+PHRASES = [
+    [(12.98, 14.67), "Most beginners don't start", None, 0.22],
+    [(15.11, 18.51), "because they fear what they will make won't be good.", None, 0.40],
+    [(19.50, 22.04), "Leaving the eraser means, from the very beginning,", None, 0.22],
+    [(22.46, 25.97), "it's an assurance that this page is *meant to be imperfect.*", "underline", 0.85],
+    [(29.11, 32.31), "For anxious people, an eraser creates *more anxiety.*", None, 0.40],
+    [(32.88, 36.88), "When you have the option to erase, you will choose to perfect.", None, 0.34],
+    [(37.46, 41.12), "Hence your hand reaches out to the eraser quite often.", None, 0.40],
+    [(41.69, 45.70), "Eliminating it means now you have to face the mess", None, 0.18],
+    [(46.15, 47.78), "without even trying to correct it.", None, 0.36],
+    [(48.39, 50.58), "And eventually, it makes us *calmer.*", "underline", 0.85],
+    [(51.60, 54.86), "Life gives us the option to improvise, or to redo,", None, 0.22],
+    [(55.26, 56.61), "but never to *undo.*", "strike", 0.40],
+    [(57.15, 59.27), "You never stop living because of that.", None, 0.34],
+    [(59.77, 61.96), "Why should art be any *different?*", "underline", 0.0],
+]
+PAD_IN, PAD_OUT = 0.07, 0.12          # keep soft consonants / breath tails around each phrase
+
+
+def build_voice():
+    """Cut, re-space and polish the voice. Returns [(new_start, new_end), ...] per phrase."""
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", VOICE_RAW, "-ac", "1", "-ar", str(SR),
+                          "-f", "f32le", "-"], capture_output=True, check=True).stdout
+    a = np.frombuffer(raw, np.float32)
+    tone = a[int(3.6 * SR):int(6.3 * SR)]              # room tone from the quiet lead-in
+    fade = int(0.012 * SR)
+    ramp = np.linspace(0, 1, fade, dtype=np.float32)
+    parts, spans, t = [], [], 0.0
+
+    def room(sec):
+        n = int(sec * SR)
+        return np.resize(tone, n) * 0.6
+
+    for (s, e), _, _, gap in PHRASES:
+        seg = a[int((s - PAD_IN) * SR):int((e + PAD_OUT) * SR)].copy()
+        seg[:fade] *= ramp
+        seg[-fade:] *= ramp[::-1]
+        parts.append(seg)
+        spans.append((t + PAD_IN, t + PAD_IN + (e - s)))
+        t += len(seg) / SR
+        if gap:
+            parts.append(room(gap))
+            t += gap
+    edit = np.concatenate([room(0.15)] + parts + [room(0.6)])
+    spans = [(x + 0.15, y + 0.15) for x, y in spans]
+    os.makedirs(OUT, exist_ok=True)
+    chain = ("highpass=f=85,afftdn=nr=14:nf=-42:tn=1,"
+             "equalizer=f=250:t=q:w=1.2:g=-2,equalizer=f=3500:t=q:w=1.0:g=2.5,"
+             "deesser=i=0.4,acompressor=threshold=-22dB:ratio=3:attack=8:release=120:makeup=2,"
+             "loudnorm=I=-15:TP=-1.5:LRA=7")
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "f32le", "-ar", str(SR), "-ac", "1", "-i", "-",
+                    "-af", chain, "-ar", str(SR), "-ac", "2", VOICE_OUT], input=edit.tobytes(), check=True)
+    return spans, len(edit) / SR
+
 # --------------------------------------------------------------------------- story
 
 ITEMS = []
 
 
 def build():
+    global DURATION
     scan, hand, selfie = load_sources()
+    spans, voice_len = build_voice()
+    spans = [(VOICE_START + x, VOICE_START + y) for x, y in spans]
+    DURATION = round(VOICE_START + voice_len + OUTRO, 2)
     card_w = 840
-    card_h = int(card_w * scan.height / scan.width)
     top_center = (W // 2, 140 + 900 // 2)          # card zone y 140..1040
 
-    # 0. Hook ------------------------------------------------------------------
-    ITEMS.append(Eraser(0.0, 4.6, (W // 2, 700), strike_at=1.6))
-    ITEMS.append(Caption("I stopped using an *eraser.*", 0.35, 4.6, 1000, size=104))
-    ITEMS.append(Caption("Pen only. Straight onto the page.", 2.4, 4.6, 1260, size=70, color=GREY))
+    def captions(first, last, end):
+        for i in range(first, last + 1):
+            (s0, s1), text = spans[i], PHRASES[i][1]
+            nxt = spans[i + 1][0] - 0.05 if i < last else end
+            big = PHRASES[i][2] == "strike"
+            ITEMS.append(Caption(text, s0 - 0.08, nxt, TEXT_Y + (30 if big else 0), size=116 if big else 82,
+                                 mark=PHRASES[i][2], write_in=max(0.5, (s1 - s0) * 0.85)))
 
-    # 1. The page draws itself ------------------------------------------------
-    rev_h = 1180
+    # 0. Hook (before the voice) ---------------------------------------------
+    ITEMS.append(Eraser(0.0, VOICE_START, (W // 2, 700), strike_at=1.1))
+    ITEMS.append(Caption("I stopped using an *eraser.*", 0.25, VOICE_START, 1000, size=104, write_in=1.0))
+    ITEMS.append(Caption("Here's why", 1.9, VOICE_START, 1260, size=70, color=GREY))
+
+    # 1. Reason 01: the page draws itself while she speaks ---------------------
+    t0, t1 = VOICE_START - 0.2, spans[4][0] - 0.25
+    rev_h = 900
     rev_w = int(rev_h * scan.width / scan.height)
-    ITEMS.append(InkReveal(scan, (rev_w, rev_h), (W // 2, 160 + rev_h // 2), 4.6, 10.6,
-                           (0, 0, 1, 1), (0, 0, 1, 1), enter=0.3, leave=0.5, draw_end=3.0, page_end=4.0))
-    ITEMS.append(Caption("Every line here stayed.", 5.0, 10.6, 1400, size=84))
-    ITEMS.append(Caption("Here's *why*", 8.4, 10.6, 1500, size=84, mark="underline"))
+    ITEMS.append(InkReveal(scan, (rev_w, rev_h), top_center, t0, t1,
+                           (0, 0, 1, 1), (0, 0, 1, 1), enter=0.3, leave=0.5, draw_end=4.0, page_end=5.2))
+    ITEMS.append(Badge("01", t0 + 0.3, t1, (150, 1080)))
+    captions(0, 3, t1)
 
-    # 2. Reason 01 ------------------------------------------------------------
-    t0, t1 = 10.6, 21.0
+    # 2. Reason 02 ------------------------------------------------------------
+    t0, t1 = t1, spans[10][0] - 0.25
     ITEMS.append(Card(scan, (card_w, 900), top_center, t0, t1,
-                      (0.02, 0.02, 0.98, 0.54), (0.12, 0.06, 0.88, 0.47)))
-    ITEMS.append(Badge("01", t0 + 0.4, t1, (150, 1080)))
-    ITEMS.append(Caption("Most beginners never start, because they fear what they make won't be good.",
-                         t0 + 0.7, t0 + 5.0, TEXT_Y, size=80))
-    ITEMS.append(Caption("No eraser is the promise, from page one, that this page is *meant to be imperfect.*",
-                         t0 + 5.2, t1, TEXT_Y, size=80, mark="underline"))
-
-    # 3. Reason 02 ------------------------------------------------------------
-    t0, t1 = 21.0, 33.0
-    ITEMS.append(Card(scan, (card_w, 900), top_center, t0, t1,
-                      (0.0, 0.45, 1.0, 1.0), (0.05, 0.56, 0.62, 0.9), rot=0))
+                      (0.0, 0.45, 1.0, 1.0), (0.05, 0.56, 0.62, 0.9)))
     ITEMS.append(Badge("02", t0 + 0.4, t1, (150, 1080)))
-    ITEMS.append(Caption("For anxious people, an eraser creates *more* anxiety.", t0 + 0.7, t0 + 4.2, TEXT_Y,
-                         size=80))
-    ITEMS.append(Caption("When you can erase, you chase perfect. Your hand keeps reaching for it.",
-                         t0 + 4.4, t0 + 8.0, TEXT_Y, size=80))
-    ITEMS.append(Caption("Without it, you face the mess. And slowly, it makes you *calmer.*",
-                         t0 + 8.2, t1, TEXT_Y, size=80, mark="underline"))
+    captions(4, 9, t1)
 
-    # 4. Reason 03 ------------------------------------------------------------
-    t0, t1 = 33.0, 44.0
+    # 3. Reason 03 ------------------------------------------------------------
+    t0, t1 = t1, spans[13][1] + 0.9
     ITEMS.append(Card(hand, (card_w, 900), top_center, t0, t1,
                       (0.0, 0.0, 1.0, 1.0 * (900 / card_w) * hand.width / hand.height),
                       (0.1, 0.18, 0.9, 0.18 + 0.8 * (900 / card_w) * hand.width / hand.height)))
     ITEMS.append(Badge("03", t0 + 0.4, t1, (150, 1080)))
-    ITEMS.append(Caption("Life gives us the option to improvise, or to redo.", t0 + 0.7, t0 + 4.0, TEXT_Y,
-                         size=80))
-    ITEMS.append(Caption("Never to *undo.*", t0 + 4.2, t0 + 7.0, TEXT_Y + 40, size=120, mark="strike"))
-    ITEMS.append(Caption("You never stop living because of that. Why should art be any *different?*",
-                         t0 + 7.2, t1, TEXT_Y, size=80))
+    captions(10, 13, t1)
 
-    # 5. Outro ----------------------------------------------------------------
-    t0, t1 = 44.0, DURATION + 1
+    # 4. Outro ----------------------------------------------------------------
+    t0, t1 = t1, DURATION + 1
     sw = 760
     sh = int(sw * 1.18)
     ratio = (sh / sw) * selfie.width / selfie.height
@@ -445,9 +512,9 @@ def main():
     n = int(DURATION * FPS)
     out = os.path.join(OUT, "no_eraser.mp4")
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-           "-r", str(FPS), "-i", "-", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
+           "-r", str(FPS), "-i", "-", "-i", VOICE_OUT, "-af", f"adelay={int(VOICE_START * 1000)}:all=1,apad",
            "-c:v", "libx264", "-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p",
-           "-profile:v", "high", "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart", out]
+           "-profile:v", "high", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", out]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     with Pool(os.cpu_count()) as pool:
         for i, buf in enumerate(pool.imap(render_frame, range(n), chunksize=4)):
@@ -456,7 +523,7 @@ def main():
                 print(f"frame {i}/{n}", flush=True)
     proc.stdin.close()
     proc.wait()
-    Image.frombytes("RGB", (W, H), render_frame(int(9.5 * FPS))).save(
+    Image.frombytes("RGB", (W, H), render_frame(int((VOICE_START + 6.0) * FPS))).save(
         os.path.join(OUT, "no_eraser_cover.jpg"), quality=92)
     print("wrote", out)
 

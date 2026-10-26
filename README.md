@@ -1,6 +1,6 @@
 # Insta-unrushed: weekly sketchbook tour
 
-**New: "Why I draw without an eraser"** (`make_no_eraser.py` → `output/no_eraser.mp4`, 50 s, 30 fps). The dragonfly ink page draws itself in white on a black background, then three reasons write themselves in with red accents. Caption: `output/no_eraser_caption.txt`. Cover: `output/no_eraser_cover.jpg`. Preview stills: `python3 make_no_eraser.py --preview 3 20`.
+**New: "Why I draw without an eraser"** (`make_no_eraser.py` → `output/no_eraser.mp4`, 57 s, 30 fps), with the artist's own voice-over. The raw take (`audio/no_eraser_voice_raw.mp3`) is trimmed to the spoken phrases (dead air, an off-script aside and long pauses removed), denoised, EQ'd, compressed and normalised to -15 LUFS (`output/no_eraser_voice.wav`). The dragonfly ink page draws itself in white on a black background, and each spoken phrase writes itself in as a caption with red accents. The phrase cut list and captions are `PHRASES` in the script. Caption: `output/no_eraser_caption.txt`. Cover: `output/no_eraser_cover.jpg`. Preview stills: `python3 make_no_eraser.py --preview 3 20`.
 
 There are two versions of the weekly sketchbook tour reel:
 
