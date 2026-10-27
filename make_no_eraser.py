@@ -12,6 +12,7 @@ Each phrase is also the caption shown while it is spoken.
 
 Usage:  python3 make_no_eraser.py               # renders output/no_eraser.mp4
         python3 make_no_eraser.py --preview 3 9 # stills at the given seconds -> output/preview/
+        python3 make_no_eraser.py --wide        # 1920x1080 landscape cut -> output/no_eraser_wide.mp4
 """
 import math
 import os
@@ -28,7 +29,8 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 ART = os.path.join(ROOT, "artworks")
 OUT = os.path.join(ROOT, "output")
 
-W, H = 1080, 1920
+WIDE = "--wide" in sys.argv          # 16:9 landscape cut: art on the left, captions on the right
+W, H = (1920, 1080) if WIDE else (1080, 1920)
 FPS = 30
 DURATION = 50.0       # set by build() from the edited voice length
 VOICE_RAW = os.path.join(ROOT, "audio", "no_eraser_voice_raw.mp3")
@@ -44,8 +46,20 @@ GREY = (150, 150, 155)
 ERASER_PINK = (236, 128, 150)
 ERASER_BLUE = (70, 110, 200)
 
-TEXT_W = 920          # max caption width
-TEXT_Y = 1170         # top of the caption zone (below the art card, above the IG UI)
+if WIDE:
+    TEXT_W = 820      # caption column to the right of the art
+    TEXT_X = 1400     # centre of the caption column
+    TEXT_Y = 560      # caption blocks are centred on this line
+    ART_C = (530, 540)
+    CARD = (780, 860)
+    BADGE_C = (TEXT_X, 250)
+else:
+    TEXT_W = 920      # max caption width
+    TEXT_X = W // 2
+    TEXT_Y = 1170     # top of the caption zone (below the art card, above the IG UI)
+    ART_C = (W // 2, 140 + 900 // 2)          # card zone y 140..1040
+    CARD = (840, 900)
+    BADGE_C = (150, 1080)
 
 
 # --------------------------------------------------------------------------- easing
@@ -99,7 +113,7 @@ class Card:
 
     def frame(self, t):
         k = ease_in_out((t - self.t0) / (self.t1 - self.t0))
-        b = [a + (c - a) * k for a, c in zip(self.box0, self.box1)]
+        b = [clamp(a + (c - a) * k) for a, c in zip(self.box0, self.box1)]
         sw, sh = self.src.size
         box = (b[0] * sw, b[1] * sh, b[2] * sw, b[3] * sh)
         return self.src.resize(self.size, Image.BILINEAR, box=box)
@@ -229,12 +243,15 @@ class Caption:
     """A block of lines that 'write' in left-to-right, then fade out."""
 
     def __init__(self, text, t0, t1, y, size=82, font=None, align="center", mark=None,
-                 cps=34.0, color=CHALK, line_gap=1.08, write_in=None):
+                 cps=34.0, color=CHALK, line_gap=1.08, write_in=None, cx=None, center_y=False,
+                 max_w=None):
         self.font = font or caveat(size)
-        self.lines = render_lines(text, self.font, color=color)
-        self.t0, self.t1, self.y, self.align, self.mark = t0, t1, y, align, mark
+        self.lines = render_lines(text, self.font, max_w=max_w or TEXT_W, color=color)
+        self.t0, self.t1, self.align, self.mark = t0, t1, align, mark
+        self.cx = W // 2 if cx is None else cx
         self.cps, self.line_gap = cps, line_gap
         self.lh = int(sum(self.font.getmetrics()) * line_gap)
+        self.y = y - self.height // 2 if center_y else y
         # writing schedule per line
         self.sched, t = [], t0
         for im, _ in self.lines:
@@ -267,7 +284,7 @@ class Caption:
             p = (t - ts) / dur
             if p <= 0:
                 continue
-            x = (W - im.width) // 2 if self.align == "center" else 80
+            x = self.cx - im.width // 2 if self.align == "center" else 80
             y = int(self.y + li * self.lh + lift)
             reveal = int(im.width * ease_out(p)) if p < 1 else im.width
             if reveal <= 0:
@@ -424,56 +441,63 @@ def build():
     spans, voice_len = build_voice()
     spans = [(VOICE_START + x, VOICE_START + y) for x, y in spans]
     DURATION = round(VOICE_START + voice_len + OUTRO, 2)
-    card_w = 840
-    top_center = (W // 2, 140 + 900 // 2)          # card zone y 140..1040
+    cw, ch = CARD
 
     def captions(first, last, end):
         for i in range(first, last + 1):
             (s0, s1), text = spans[i], PHRASES[i][1]
             nxt = spans[i + 1][0] - 0.05 if i < last else end
             big = PHRASES[i][2] == "strike"
-            ITEMS.append(Caption(text, s0 - 0.08, nxt, TEXT_Y + (30 if big else 0), size=116 if big else 82,
+            y = TEXT_Y + (0 if WIDE else 30 if big else 0)
+            ITEMS.append(Caption(text, s0 - 0.08, nxt, y, size=116 if big else 82, cx=TEXT_X, center_y=WIDE,
                                  mark=PHRASES[i][2], write_in=max(0.5, (s1 - s0) * 0.85)))
 
     # 0. Hook (before the voice) ---------------------------------------------
-    ITEMS.append(Eraser(0.0, VOICE_START, (W // 2, 700), strike_at=1.1))
-    ITEMS.append(Caption("I stopped using an *eraser.*", 0.25, VOICE_START, 1000, size=104, write_in=1.0))
-    ITEMS.append(Caption("Here's why", 1.9, VOICE_START, 1260, size=70, color=GREY))
+    ITEMS.append(Eraser(0.0, VOICE_START, (W // 2, 380 if WIDE else 700), strike_at=1.1))
+    ITEMS.append(Caption("I stopped using an *eraser.*", 0.25, VOICE_START, 640 if WIDE else 1000, size=104,
+                         write_in=1.0, max_w=1400))
+    ITEMS.append(Caption("Here's why", 1.9, VOICE_START, 800 if WIDE else 1260, size=70, color=GREY))
 
     # 1. Reason 01: the page draws itself while she speaks ---------------------
     t0, t1 = VOICE_START - 0.2, spans[4][0] - 0.25
-    rev_h = 900
+    rev_h = ch
     rev_w = int(rev_h * scan.width / scan.height)
-    ITEMS.append(InkReveal(scan, (rev_w, rev_h), top_center, t0, t1,
+    ITEMS.append(InkReveal(scan, (rev_w, rev_h), ART_C, t0, t1,
                            (0, 0, 1, 1), (0, 0, 1, 1), enter=0.3, leave=0.5, draw_end=4.0, page_end=5.2))
-    ITEMS.append(Badge("01", t0 + 0.3, t1, (150, 1080)))
+    ITEMS.append(Badge("01", t0 + 0.3, t1, BADGE_C))
     captions(0, 3, t1)
 
     # 2. Reason 02 ------------------------------------------------------------
     t0, t1 = t1, spans[10][0] - 0.25
-    ITEMS.append(Card(scan, (card_w, 900), top_center, t0, t1,
-                      (0.0, 0.45, 1.0, 1.0), (0.05, 0.56, 0.62, 0.9)))
-    ITEMS.append(Badge("02", t0 + 0.4, t1, (150, 1080)))
+    if WIDE:                                       # crop that keeps the card's aspect, ending at the page foot
+        k = (ch / cw) * scan.width / scan.height
+        boxes = (0.0, 1 - k, 1.0, 1.0), (0.05, 1 - 0.6 * k, 0.65, 1.0)
+    else:
+        boxes = (0.0, 0.45, 1.0, 1.0), (0.05, 0.56, 0.62, 0.9)
+    ITEMS.append(Card(scan, (cw, ch), ART_C, t0, t1, *boxes))
+    ITEMS.append(Badge("02", t0 + 0.4, t1, BADGE_C))
     captions(4, 9, t1)
 
     # 3. Reason 03 ------------------------------------------------------------
     t0, t1 = t1, spans[13][1] + 0.9
-    ITEMS.append(Card(hand, (card_w, 900), top_center, t0, t1,
-                      (0.0, 0.0, 1.0, 1.0 * (900 / card_w) * hand.width / hand.height),
-                      (0.1, 0.18, 0.9, 0.18 + 0.8 * (900 / card_w) * hand.width / hand.height)))
-    ITEMS.append(Badge("03", t0 + 0.4, t1, (150, 1080)))
+    k = (ch / cw) * hand.width / hand.height
+    ITEMS.append(Card(hand, (cw, ch), ART_C, t0, t1,
+                      (0.0, 0.0, 1.0, k), (0.1, 0.18, 0.9, 0.18 + 0.8 * k)))
+    ITEMS.append(Badge("03", t0 + 0.4, t1, BADGE_C))
     captions(10, 13, t1)
 
     # 4. Outro ----------------------------------------------------------------
     t0, t1 = t1, DURATION + 1
-    sw = 760
+    sw = 640 if WIDE else 760
     sh = int(sw * 1.18)
     ratio = (sh / sw) * selfie.width / selfie.height
-    ITEMS.append(Card(selfie, (sw, sh), (W // 2, 140 + sh // 2), t0, t1,
+    center = ART_C if WIDE else (W // 2, 140 + sh // 2)
+    ITEMS.append(Card(selfie, (sw, sh), center, t0, t1,
                       (0.0, 0.0, 1.0, ratio), (0.04, 0.02, 0.96, 0.02 + 0.92 * ratio), rot=3, leave=0.01))
-    ITEMS.append(Caption("Put the eraser down.", t0 + 0.6, t1, 1160, size=96))
-    ITEMS.append(Caption("Pick up the *pen.*", t0 + 1.7, t1, 1270, size=96, mark="underline"))
-    ITEMS.append(Caption("Save this for your next blank page", t0 + 3.2, t1, 1440, size=64, color=GREY))
+    ys = (400, 510, 690) if WIDE else (1160, 1270, 1440)
+    ITEMS.append(Caption("Put the eraser down.", t0 + 0.6, t1, ys[0], size=96, cx=TEXT_X))
+    ITEMS.append(Caption("Pick up the *pen.*", t0 + 1.7, t1, ys[1], size=96, mark="underline", cx=TEXT_X))
+    ITEMS.append(Caption("Save this for your next blank page", t0 + 3.2, t1, ys[2], size=64, color=GREY, cx=TEXT_X))
 
 
 def setup():
@@ -507,10 +531,11 @@ def main():
             [2.5, 6.5, 9.8, 14, 19, 24, 31, 36, 39, 43, 49]
         for ts in times:
             Image.frombytes("RGB", (W, H), render_frame(int(ts * FPS))).save(
-                os.path.join(pdir, f"ne_t{ts:05.1f}.jpg"), quality=85)
+                os.path.join(pdir, f"ne{'_wide' if WIDE else ''}_t{ts:05.1f}.jpg"), quality=85)
         return
     n = int(DURATION * FPS)
-    out = os.path.join(OUT, "no_eraser.mp4")
+    name = "no_eraser_wide" if WIDE else "no_eraser"
+    out = os.path.join(OUT, name + ".mp4")
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
            "-r", str(FPS), "-i", "-", "-i", VOICE_OUT, "-af", f"adelay={int(VOICE_START * 1000)}:all=1,apad",
            "-c:v", "libx264", "-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p",
@@ -524,7 +549,7 @@ def main():
     proc.stdin.close()
     proc.wait()
     Image.frombytes("RGB", (W, H), render_frame(int((VOICE_START + 6.0) * FPS))).save(
-        os.path.join(OUT, "no_eraser_cover.jpg"), quality=92)
+        os.path.join(OUT, name + "_cover.jpg"), quality=92)
     print("wrote", out)
 
 
