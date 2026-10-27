@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Call-to-action end card for the no-eraser reel, in the same black/white/red style.
 
-Writes output/no_eraser_cta_story.jpg (1080x1920, reel end card / story) and
-output/no_eraser_cta_feed.jpg (1080x1350, feed post / carousel slide).
+Writes output/no_eraser_cta_story.jpg (1080x1920, reel end card / story),
+output/no_eraser_cta_feed.jpg (1080x1350, feed post / carousel slide) and
+output/no_eraser_cta_wide.jpg (1920x1080, 16:9 for YouTube / landscape video).
 """
 import os
 
@@ -33,11 +34,12 @@ def eraser_icon(scale=1.0):
     return im
 
 
-def text_block(canvas, text, y, size, mark=None, color=CHALK, font=None, gap=1.05):
+def text_block(canvas, text, y, size, mark=None, color=CHALK, font=None, gap=1.05, left=None, max_w=None):
     font = font or caveat(size)
     lh = int(sum(font.getmetrics()) * gap)
-    for i, (im, spans) in enumerate(render_lines(text, font, color=color)):
-        x = (canvas.width - im.width) // 2
+    lines = render_lines(text, font, color=color, **({"max_w": max_w} if max_w else {}))
+    for i, (im, spans) in enumerate(lines):
+        x = (canvas.width - im.width) // 2 if left is None else left - 10
         canvas.alpha_composite(im, (x, y + i * lh))
         merged = []
         for a, b in spans:                       # one continuous mark across adjacent red words
@@ -112,12 +114,31 @@ def feed(scan):
     return finish(c)
 
 
+def wide(scan):
+    W, H = 1920, 1080
+    c = Image.new("RGBA", (W, H), INK_BLACK + (255,))
+    card = dragonfly_card(scan, 820, 640, box=(0.02, 0.02, 0.98, 0.52))
+    top = (H - card.height) // 2
+    c.alpha_composite(card, (110, top))
+    er = eraser_icon(0.7)
+    c.alpha_composite(er, (60, top + card.height - er.height // 2 - 30))
+    x = 1040
+    y = text_block(c, "Your turn.", 190, 150, font=marker(124), left=x)
+    y = text_block(c, "One page. In pen. *No eraser.*", y + 10, 76, mark="underline", left=x, max_w=840)
+    y = action_row(c, y + 60, ["Save this for your next blank page",
+                               "Share it with a friend who erases a lot",
+                               "Comment PEN when you've tried it"], size=52, x0=x)
+    text_block(c, "Imperfect pages welcome here", y + 30, 50, color=GREY, left=x)
+    return finish(c)
+
+
 def main():
     scan, _, _ = load_sources()
     os.makedirs(OUT, exist_ok=True)
     story(scan).save(os.path.join(OUT, "no_eraser_cta_story.jpg"), quality=93)
     feed(scan).save(os.path.join(OUT, "no_eraser_cta_feed.jpg"), quality=93)
-    print("wrote output/no_eraser_cta_story.jpg, output/no_eraser_cta_feed.jpg")
+    wide(scan).save(os.path.join(OUT, "no_eraser_cta_wide.jpg"), quality=93)
+    print("wrote output/no_eraser_cta_story.jpg, output/no_eraser_cta_feed.jpg, output/no_eraser_cta_wide.jpg")
 
 
 if __name__ == "__main__":
