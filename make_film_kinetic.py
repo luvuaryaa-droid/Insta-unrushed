@@ -7,10 +7,15 @@ words on an orange highlight. Opens on a hook over the finished drawing, rewinds
 first sketch, runs a fast MESS / CHALLENGE / FEAR / OVERCOMING montage, zooms into the final
 drawing, and ends on a "Save this" list.
 A "journey" section (creating is a journey / the mess, the challenge, the fear, the
-overcoming / without them the becoming is nothing) runs before the final reveal.
+overcoming / without them the becoming means nothing) runs before the final reveal.
+
+--vo renders the ~18 s voiceover cut instead: hook (0-3 s), the drawing stages under the
+voiceover lines (3-15 s), and the finished drawing with the call to action (last 3 s).
+The script to record is in output/moka_pot_vo_script.txt.
 
 Usage:  python3 make_film_kinetic.py                   # renders output/moka_pot_film_kinetic.mp4
-        python3 make_film_kinetic.py --preview 2 16 28  # stills -> output/preview/
+        python3 make_film_kinetic.py --vo              # renders output/moka_pot_vo_cut.mp4
+        python3 make_film_kinetic.py --preview 2 16 28  # stills -> output/preview/ (add --vo for that cut)
 """
 import math
 import os
@@ -52,12 +57,13 @@ SEGMENTS = [
     # the journey: the strip slowly travels back along the path while these play
     (13.0, ["CREATING IS", "A JOURNEY."], {"A JOURNEY."}, ""),
     (15.4, ["YOU GET BETTER", "BY WALKING", "THE PATH.", "NOT BEFORE IT."], {"NOT BEFORE IT."}, ""),
-    (18.6, ["WAITING UNTIL IT'S", "\"WORTH SHARING\"", "LEAVES THE MAIN", "STORY BEHIND."], {"STORY BEHIND."}, ""),
+    (18.6, ["WAITING UNTIL", "YOUR ART IS", "\"WORTH SHARING\"", "MEANS LEAVING OUT", "THE MAIN STORY."],
+     {"THE MAIN STORY."}, ""),
     (22.2, ["THE MESS."], set(), ""),
     (22.75, ["THE CHALLENGE."], set(), ""),
     (23.3, ["THE FEAR."], set(), ""),
     (23.85, ["THE OVERCOMING."], {"THE OVERCOMING."}, ""),
-    (24.5, ["WITHOUT THEM,", "THE BECOMING", "IS NOTHING."], {"THE BECOMING"}, ""),
+    (24.5, ["WITHOUT THEM,", "THE BECOMING", "MEANS NOTHING."], {"THE BECOMING"}, ""),
     (27.4, ["THEN IT", "BECAME", "THIS."], {"THIS."}, ""),
     (30.6, ["SHOW UP", "ANYWAY."], {"ANYWAY."}, "that's the whole skill."),
     (33.6, [], set(), ""),                                  # outro list takes over
@@ -73,6 +79,29 @@ REWIND = (3.0, 3.8)
 ZOOM = (24.5, 25.1, 30.0, 30.6)   # zoom the strip into the final drawing
 ZOOM_MAX = 1.18
 OUTRO = 33.6
+
+# ---- voiceover cut (--vo): ~18 s, the words follow the voiceover script
+VO_CUT = dict(
+    NAME="moka_pot_vo_cut",
+    DURATION=18.5,
+    SEGMENTS=[
+        (0.0, ["YOU DON'T NEED", "TO BE GOOD", "TO SHOW", "YOUR ART."], {"YOUR ART."}, ""),
+        (2.6, [], set(), ""),                                                       # rewind
+        (3.2, ["YOU DON'T GET", "GOOD BEFORE", "THE PATH."], set(), ""),
+        (5.4, ["YOU GET GOOD", "ON IT."], {"ON IT."}, ""),
+        (7.4, ["IF YOU ONLY", "SHARE THE", "FINISHED PIECE,"], set(), ""),
+        (9.6, ["YOU'RE LEAVING", "OUT THE", "REAL STORY:"], {"REAL STORY:"}, ""),
+        (11.8, ["THE MESS."], set(), ""),
+        (12.6, ["THE FEAR."], set(), ""),
+        (13.4, ["THE BECOMING."], {"THE BECOMING."}, ""),
+        (15.0, ["SHARE YOUR", "MESSY MIDDLE", "THIS WEEK.", "TAG ME."], {"MESSY MIDDLE"}, ""),
+    ],
+    STRIP_KEYS=[(2.6, 0, 0.6), (5.4, 1, 0.5), (7.4, 2, 0.5), (9.6, 0, 2.0),       # stages, then a look back
+                (12.6, 2, 0.25), (13.4, 3, 0.25)],                               # mess / fear / becoming
+    REWIND=(2.6, 3.2),
+    ZOOM=(13.6, 14.2, 99.0, 100.0),   # zoom into the finished drawing and stay there
+    OUTRO=99.0,                       # no list in this cut
+)
 
 LIST_SUB = "5 things to post when your art doesn't feel \"good enough\""
 LIST = ["THE UNFINISHED STAGE", "THE MESSY DESK YOU MADE IT ON", "ONE SMALL PART YOU LOVE",
@@ -218,6 +247,9 @@ def render(i):
 
 def main():
     os.makedirs(OUT, exist_ok=True)
+    if "--vo" in sys.argv:
+        sys.argv.remove("--vo")
+        globals().update(VO_CUT)   # set before the worker pool forks, so workers see it too
     if "--preview" in sys.argv:
         init()
         pdir = os.path.join(OUT, "preview")

@@ -1,0 +1,22 @@
+Voiceover script for moka_pot_vo_cut.mp4 (18.5 s, about 10 s of talking)
+
+Record it in one take, unhurried. The times below are when each line appears on screen;
+start speaking at about 3 s, right after the film rewinds.
+
+0.0 - 3.0   (no voice: the hook is on screen, then the film rewinds)
+            On screen: YOU DON'T NEED TO BE GOOD TO SHOW YOUR ART.
+
+3.2         "You don't get good before the path."
+5.4         "You get good on it."
+7.4         "If you only share the finished piece,"
+9.6         "you're leaving out the real story:"
+11.8        "the mess,"
+12.6        "the fear,"
+13.4        "the becoming."
+
+15.0 - 18.5 (optional, or let the music carry it)
+            "Share your messy middle this week. Tag me."
+            On screen: SHARE YOUR MESSY MIDDLE THIS WEEK. TAG ME.
+
+To add it: in Instagram's reel editor, tap "Voiceover" (or "Audio" > "Voiceover"),
+record over the video, and lower the music under your voice.
