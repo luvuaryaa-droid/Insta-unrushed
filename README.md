@@ -1,5 +1,9 @@
 # Insta-unrushed
 
+## Moka pot process reel: kinetic type + film (horizontal)
+
+`make_film_kinetic.py` → `output/moka_pot_film_kinetic.mp4` (1920×1080, 31 s, silent audio track). A vertical 35mm film strip on the right carries the five photos (warm film grade, grain, light leak). On the left, huge bold words slam in line by line, with key words on an orange highlight. It opens on the hook "I STUDIED FINANCE. NOT ART.", rewinds to the first sketch, runs a fast LINES / MARKER / FILL / DONE montage, zooms into the final drawing, and ends on a "Save this" list. The cover is `output/moka_pot_film_kinetic_cover.jpg`, and the caption is `output/moka_pot_film_kinetic_caption.txt`. Words and timings are in `SEGMENTS` at the top of the script.
+
 ## Moka pot process reel: film roll (horizontal)
 
 `make_film_reel.py` → `output/moka_pot_film.mp4` (1920×1080, 33 s, silent audio track). The five process photos sit on a scrolling 35mm film strip. It opens on the finished drawing with the hook "I studied finance, not art.", rewinds to the first sketch, and advances frame by frame with typewriter captions. It zooms into the final drawing and ends on a typed "Save this" list. The cover is `output/moka_pot_film_cover.jpg`, and the post caption is `output/moka_pot_film_caption.txt`.
