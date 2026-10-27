@@ -1,5 +1,16 @@
 # Insta-unrushed
 
+## Moka pot process reel: film roll (horizontal)
+
+`make_film_reel.py` → `output/moka_pot_film.mp4` (1920×1080, 33 s, silent audio track). The five process photos sit on a scrolling 35mm film strip. It opens on the finished drawing with the hook "I studied finance, not art.", rewinds to the first sketch, and advances frame by frame with typewriter captions. It zooms into the final drawing and ends on a typed "Save this" list. The cover is `output/moka_pot_film_cover.jpg`, and the post caption is `output/moka_pot_film_caption.txt`.
+
+```
+python3 make_film_reel.py                   # full render
+python3 make_film_reel.py --preview 2 16 28  # stills -> output/preview/
+```
+
+Captions and timings are the constants at the top of `make_film_reel.py`. The style samples it was chosen from are in `output/samples/` (`make_style_samples.py`, `make_wide_samples.py`).
+
 ## Moka pot process reel
 
 `make_process_reel.py` → `output/moka_pot_process.mp4` (1080×1920, 29 s). It turns the five moka pot process photos in `photos/moka_pot/` (sketch, clipboard, filled in, final scan, holding it) into a papercut reel with the "You don't need to be good to show your art" captions, and ends on a "Save this" card listing 5 things to post. It reuses the paper sprites and renderer from `make_video.py`. The post caption is in `output/moka_pot_process_caption.txt`, and the cover frame is `output/moka_pot_process_cover.jpg`.
