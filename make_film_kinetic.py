@@ -4,8 +4,10 @@
 A vertical 35mm film strip on the right carries the five process photos (warm faded
 grade, grain, light leak). On the left, huge bold words slam in one at a time, with key
 words on an orange highlight. Opens on a hook over the finished drawing, rewinds to the
-first sketch, runs a fast LINES / MARKER / FILL / DONE montage, zooms into the final
+first sketch, runs a fast MESS / CHALLENGE / FEAR / OVERCOMING montage, zooms into the final
 drawing, and ends on a "Save this" list.
+A "journey" section (creating is a journey / the mess, the challenge, the fear, the
+overcoming / without them the becoming is nothing) runs before the final reveal.
 
 Usage:  python3 make_film_kinetic.py                   # renders output/moka_pot_film_kinetic.mp4
         python3 make_film_kinetic.py --preview 2 16 28  # stills -> output/preview/
@@ -26,7 +28,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "output")
 NAME = "moka_pot_film_kinetic"
 W, H, FPS = 1920, 1080, 30
-DURATION = 31.0
+DURATION = 43.0
 
 BG = (20, 16, 13)
 FILM_BASE = (34, 25, 18)
@@ -47,23 +49,30 @@ SEGMENTS = [
     (3.8, ["I STUDIED", "FINANCE.", "NOT ART."], {"NOT ART."}, "day one: wobbly outlines, an empty mug."),
     (7.8, ["HALF THE PAGE", "WAS STILL", "JUST LINES."], {"JUST LINES."}, ""),
     (10.4, ["I ALMOST", "DIDN'T SHARE", "ANY OF THIS."], {"ANY OF THIS."}, ""),
-    (13.0, ["LINES."], set(), "day one"),
-    (13.5, ["MARKER."], set(), ""),
-    (14.0, ["FILL."], set(), ""),
-    (14.5, ["DONE."], {"DONE."}, ""),
-    (15.2, ["THEN IT", "BECAME", "THIS."], {"THIS."}, ""),
-    (18.6, ["SHOW UP", "ANYWAY."], {"ANYWAY."}, "that's the whole skill."),
-    (21.6, [], set(), ""),                                  # outro list takes over
+    # the journey: the strip slowly travels back along the path while these play
+    (13.0, ["CREATING IS", "A JOURNEY."], {"A JOURNEY."}, ""),
+    (15.4, ["YOU GET BETTER", "BY WALKING", "THE PATH.", "NOT BEFORE IT."], {"NOT BEFORE IT."}, ""),
+    (18.6, ["WAITING UNTIL IT'S", "\"WORTH SHARING\"", "LEAVES THE MAIN", "STORY BEHIND."], {"STORY BEHIND."}, ""),
+    (22.2, ["THE MESS."], set(), ""),
+    (22.75, ["THE CHALLENGE."], set(), ""),
+    (23.3, ["THE FEAR."], set(), ""),
+    (23.85, ["THE OVERCOMING."], {"THE OVERCOMING."}, ""),
+    (24.5, ["WITHOUT THEM,", "THE BECOMING", "IS NOTHING."], {"THE BECOMING"}, ""),
+    (27.4, ["THEN IT", "BECAME", "THIS."], {"THIS."}, ""),
+    (30.6, ["SHOW UP", "ANYWAY."], {"ANYWAY."}, "that's the whole skill."),
+    (33.6, [], set(), ""),                                  # outro list takes over
 ]
 BEAT = 0.38
 
 # strip moves: (start, target frame, duration); the strip starts on the final drawing (frame index 3)
-STRIP_KEYS = [(3.0, 0, 0.8), (7.8, 1, 0.5), (10.4, 2, 0.5), (13.0, 0, 0.25), (13.5, 1, 0.2), (14.0, 2, 0.2),
-              (14.5, 3, 0.2), (18.6, 4, 0.5)]
+STRIP_KEYS = [(3.0, 0, 0.8), (7.8, 1, 0.5), (10.4, 2, 0.5),
+              (13.0, 0, 2.2), (15.4, 1, 3.0), (18.6, 2, 3.4),                  # slow walk along the path
+              (22.2, 0, 0.25), (22.75, 1, 0.2), (23.3, 2, 0.2), (23.85, 3, 0.2),  # mess / challenge / fear / overcoming
+              (30.6, 4, 0.5)]
 REWIND = (3.0, 3.8)
-ZOOM = (15.4, 16.0, 18.0, 18.6)   # zoom the strip into the final drawing
+ZOOM = (24.5, 25.1, 30.0, 30.6)   # zoom the strip into the final drawing
 ZOOM_MAX = 1.18
-OUTRO = 21.6
+OUTRO = 33.6
 
 LIST_SUB = "5 things to post when your art doesn't feel \"good enough\""
 LIST = ["THE UNFINISHED STAGE", "THE MESSY DESK YOU MADE IT ON", "ONE SMALL PART YOU LOVE",
@@ -213,8 +222,8 @@ def main():
         init()
         pdir = os.path.join(OUT, "preview")
         os.makedirs(pdir, exist_ok=True)
-        for ts in [float(a) for a in sys.argv[sys.argv.index("--preview") + 1:]] or [0.0, 6.5, 9.8, 12.4,
-                                                                                     13.8, 17.2, 20.8, 30]:
+        for ts in [float(a) for a in sys.argv[sys.argv.index("--preview") + 1:]] or [0.0, 14.5, 18.0, 21.8, 23.5,
+                                                                                     26.5, 29.5, 42]:
             frame(ts).save(os.path.join(pdir, f"fk_t{ts:05.1f}.jpg"), quality=88)
         return
     out = os.path.join(OUT, NAME + ".mp4")
