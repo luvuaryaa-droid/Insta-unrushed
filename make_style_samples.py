@@ -67,7 +67,7 @@ def cover(im, w, h, zoom=1.0, focus=(0.5, 0.5)):
     cw, ch = w / s, h / s
     cx = min(max(focus[0] * im.width, cw / 2), im.width - cw / 2)
     cy = min(max(focus[1] * im.height, ch / 2), im.height - ch / 2)
-    box = (cx - cw / 2, cy - ch / 2, cx + cw / 2, cy + ch / 2)
+    box = (max(0.0, cx - cw / 2), max(0.0, cy - ch / 2), min(im.width, cx + cw / 2), min(im.height, cy + ch / 2))
     return im.resize((w, h), Image.BICUBIC, box=box, reducing_gap=2.0)
 
 
