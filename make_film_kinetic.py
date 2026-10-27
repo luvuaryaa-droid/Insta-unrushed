@@ -35,16 +35,16 @@ ORANGE = (236, 142, 48)
 GREY = (170, 158, 140)
 
 # film strip geometry (vertical strip on the right)
-FW, FH, GAP = 540, 720, 60
+FW, FH, GAP = 675, 900, 60
 PITCH = FH + GAP
-STRIP_X, STRIP_W = 1120, 720
+STRIP_W = FW + 2 * 80
+STRIP_X = W - STRIP_W - 70
 
 # words: (start, lines, highlighted lines, kicker under the stack)
 SEGMENTS = [
-    (0.0, ["I STUDIED", "FINANCE.", "NOT ART."], {"NOT ART."}, ""),
-    (2.6, [], set(), ""),                                   # rewind
-    (3.4, ["YOU DON'T", "NEED TO", "BE GOOD"], {"BE GOOD"}, ""),
-    (5.6, ["TO SHOW", "YOUR ART."], {"YOUR ART."}, "wobbly outlines. an empty mug."),
+    (0.0, ["YOU DON'T NEED", "TO BE GOOD", "TO SHOW", "YOUR ART."], {"YOUR ART."}, ""),   # hook, on screen from frame 1
+    (3.0, [], set(), ""),                                   # rewind
+    (3.8, ["I STUDIED", "FINANCE.", "NOT ART."], {"NOT ART."}, "day one: wobbly outlines, an empty mug."),
     (7.8, ["HALF THE PAGE", "WAS STILL", "JUST LINES."], {"JUST LINES."}, ""),
     (10.4, ["I ALMOST", "DIDN'T SHARE", "ANY OF THIS."], {"ANY OF THIS."}, ""),
     (13.0, ["LINES."], set(), "day one"),
@@ -58,9 +58,9 @@ SEGMENTS = [
 BEAT = 0.38
 
 # strip moves: (start, target frame, duration); the strip starts on the final drawing (frame index 3)
-STRIP_KEYS = [(2.6, 0, 0.8), (7.8, 1, 0.5), (10.4, 2, 0.5), (13.0, 0, 0.25), (13.5, 1, 0.2), (14.0, 2, 0.2),
+STRIP_KEYS = [(3.0, 0, 0.8), (7.8, 1, 0.5), (10.4, 2, 0.5), (13.0, 0, 0.25), (13.5, 1, 0.2), (14.0, 2, 0.2),
               (14.5, 3, 0.2), (18.6, 4, 0.5)]
-REWIND = (2.6, 3.4)
+REWIND = (3.0, 3.8)
 ZOOM = (15.4, 16.0, 18.0, 18.6)   # zoom the strip into the final drawing
 ZOOM_MAX = 1.18
 OUTRO = 21.6
@@ -102,7 +102,7 @@ def draw_strip(img, t):
     hp = PITCH / 6
     y = -((-off) % hp) - hp
     while y < H + hp:
-        for hx in (24, STRIP_W - 24 - 40):
+        for hx in (20, STRIP_W - 20 - 40):
             d.rounded_rectangle((hx, y, hx + 40, y + 56), 8, fill=BG + (255,))
         y += hp
     lab = font(TYPEWRITER, 24)
@@ -150,26 +150,28 @@ def draw_words(d, t):
         return
     probe = font(INTER_BLACK, 100)
     widest = max(text_size(d, w, probe)[0] for w in lines)
-    size = int(min(150, 100 * 860 / widest))
+    size = int(min(110, 100 * 760 / widest))
     lh = int(size * 1.12)
     top = H / 2 - lh * len(lines) / 2 - (30 if kicker else 0)
     beat = BEAT if len(lines) > 1 else 0.05
+    if s0 == 0:   # the hook is fully on screen from the first frame (it is also the preview image)
+        s0, beat = -10.0, 0.0
     for i, line in enumerate(lines):
-        slam(d, t, s0 + i * beat, line, 110, top + i * lh + (lh - size) / 2, size, CREAM, hot=line in hot)
+        slam(d, t, s0 + i * beat, line, 100, top + i * lh + (lh - size) / 2, size, CREAM, hot=line in hot)
     if kicker and t > s0 + beat * len(lines):
-        d.text((110, top + lh * len(lines) + 34), kicker, font=font(TYPEWRITER, 46), fill=GREY)
+        d.text((100, top + lh * len(lines) + 30), kicker, font=font(TYPEWRITER, 36), fill=GREY)
 
 
 def draw_outro(d, t):
     t0 = OUTRO + 0.5
     if t < t0:
         return
-    slam(d, t, t0, "SAVE THIS.", 110, 110, 130, CREAM, hot=True)
+    slam(d, t, t0, "SAVE THIS.", 140, 150, 100, CREAM, hot=True)
     if t > t0 + 0.4:
-        d.text((112, 300), LIST_SUB, font=font(TYPEWRITER, 46), fill=GREY)
+        d.text((142, 310), LIST_SUB, font=font(TYPEWRITER, 38), fill=GREY)
     for i, item in enumerate(LIST):
-        slam(d, t, t0 + 0.9 + i * 0.5, f"{i + 1}  {item}", 110, 400 + i * 98, 68, CREAM)
-    slam(d, t, t0 + 0.9 + 5 * 0.5 + 0.5, CTA, 110, 935, 54, CREAM, hot=True)
+        slam(d, t, t0 + 0.9 + i * 0.5, f"{i + 1}  {item}", 140, 400 + i * 84, 54, CREAM)
+    slam(d, t, t0 + 0.9 + 5 * 0.5 + 0.5, CTA, 140, 880, 44, CREAM, hot=True)
 
 
 def frame(t):
@@ -211,7 +213,7 @@ def main():
         init()
         pdir = os.path.join(OUT, "preview")
         os.makedirs(pdir, exist_ok=True)
-        for ts in [float(a) for a in sys.argv[sys.argv.index("--preview") + 1:]] or [2.3, 5.2, 7.3, 9.8, 12.4,
+        for ts in [float(a) for a in sys.argv[sys.argv.index("--preview") + 1:]] or [0.0, 6.5, 9.8, 12.4,
                                                                                      13.8, 17.2, 20.8, 30]:
             frame(ts).save(os.path.join(pdir, f"fk_t{ts:05.1f}.jpg"), quality=88)
         return
@@ -230,7 +232,7 @@ def main():
     proc.stdin.close()
     proc.wait()
     init()
-    frame(2.4).save(os.path.join(OUT, NAME + "_cover.jpg"), quality=92)
+    frame(1.0).save(os.path.join(OUT, NAME + "_cover.jpg"), quality=92)
     print("wrote", out)
 
 

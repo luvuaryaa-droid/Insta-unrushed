@@ -2,7 +2,7 @@
 
 ## Moka pot process reel: kinetic type + film (horizontal)
 
-`make_film_kinetic.py` → `output/moka_pot_film_kinetic.mp4` (1920×1080, 31 s, silent audio track). A vertical 35mm film strip on the right carries the five photos (warm film grade, grain, light leak). On the left, huge bold words slam in line by line, with key words on an orange highlight. It opens on the hook "I STUDIED FINANCE. NOT ART.", rewinds to the first sketch, runs a fast LINES / MARKER / FILL / DONE montage, zooms into the final drawing, and ends on a "Save this" list. The cover is `output/moka_pot_film_kinetic_cover.jpg`, and the caption is `output/moka_pot_film_kinetic_caption.txt`. Words and timings are in `SEGMENTS` at the top of the script.
+`make_film_kinetic.py` → `output/moka_pot_film_kinetic.mp4` (1920×1080, 31 s, silent audio track). A vertical 35mm film strip on the right carries the five photos (warm film grade, grain, light leak). On the left, huge bold words slam in line by line, with key words on an orange highlight. It opens on the hook "YOU DON'T NEED TO BE GOOD TO SHOW YOUR ART." (on screen from the first frame), rewinds to the first sketch for "I STUDIED FINANCE. NOT ART.", runs a fast LINES / MARKER / FILL / DONE montage, zooms into the final drawing, and ends on a "Save this" list. The cover is `output/moka_pot_film_kinetic_cover.jpg`, and the caption is `output/moka_pot_film_kinetic_caption.txt`. Words and timings are in `SEGMENTS` at the top of the script.
 
 ## Moka pot process reel: film roll (horizontal)
 
