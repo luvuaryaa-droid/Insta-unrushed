@@ -1,4 +1,15 @@
-# Insta-unrushed: weekly sketchbook tour
+# Insta-unrushed
+
+## Moka pot process reel
+
+`make_process_reel.py` → `output/moka_pot_process.mp4` (1080×1920, 29 s). It turns the five moka pot process photos in `photos/moka_pot/` (sketch, clipboard, filled in, final scan, holding it) into a papercut reel with the "You don't need to be good to show your art" captions, and ends on a "Save this" card listing 5 things to post. It reuses the paper sprites and renderer from `make_video.py`. The post caption is in `output/moka_pot_process_caption.txt`, and the cover frame is `output/moka_pot_process_cover.jpg`.
+
+```
+python3 make_process_reel.py              # full render
+python3 make_process_reel.py --preview 2 19.5   # stills -> output/preview/
+```
+
+## Weekly sketchbook tour
 
 There are two versions of this week's reel:
 
