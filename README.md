@@ -25,3 +25,10 @@ python3 make_video.py --preview 3 20  # stills at the given seconds -> output/pr
 The story, captions, colours and timings are all in `build()` in `make_video.py`.
 
 Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), all from Google Fonts.
+
+## Day 1: "Painting my way back to Myself"
+
+`make_day1.py` → `output/day1_progress.mp4` (1080×1920, 20 s, 30 fps, silent audio track) and `output/day1_cover.jpg`.
+The seven progress photos in `artworks/day1/` cross-fade from the first pair of socks to the finished page, under the title "Painting my way back to Myself" and a "Day 1" badge.
+The six earlier photos get the same colour look as the edited final picture (`stage7.jpg`): warm whites, deeper darks, richer colour and a deeper violet background.
+The look is tuned in `grade()`.
