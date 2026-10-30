@@ -32,3 +32,8 @@ Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), al
 The seven progress photos in `artworks/day1/` cross-fade from the first pair of socks to the finished page, under the title "Painting my way back to Myself" and a "Day 1" badge.
 The six earlier photos get the same colour look as the edited final picture (`stage7.jpg`): warm whites, deeper darks, richer colour and a deeper violet background.
 The look is tuned in `grade()`.
+
+### Brush-reveal version
+
+`make_day1_brush.py` → `output/day1_brush.mp4` (21 s) and `output/day1_brush_cover.jpg`.
+This version uses the same graded photos, shown full width. Each stage is painted on over the last one with brush strokes, the title writes itself out by hand, and "Day 1" sits on a yellow brush swash.
