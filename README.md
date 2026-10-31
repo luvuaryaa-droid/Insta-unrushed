@@ -37,3 +37,14 @@ The look is tuned in `grade()`.
 
 `make_day1_brush.py` → `output/day1_brush.mp4` (21 s) and `output/day1_brush_cover.jpg`.
 This version uses the same graded photos, shown full width. Each stage is painted on over the last one with brush strokes, the title writes itself out by hand, and "Day 1" sits on a yellow brush swash.
+
+## Day 1: fireplace page
+
+This uses the same two styles, made from the fireplace painting's eight progress photos (`artworks/day1_fireplace/`, with `stage8.jpg` as the edited final). The background is a mustard striped wall above a wooden floor.
+
+```
+python3 make_day1.py --set fireplace        # output/fireplace_day1_progress.mp4 (23 s, cross-fade)
+python3 make_day1_brush.py --set fireplace  # output/fireplace_day1_brush.mp4 (24 s, brush reveal)
+```
+
+Photo sets, crops and colours live in `SETS` in `make_day1.py`.

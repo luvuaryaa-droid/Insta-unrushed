@@ -5,8 +5,9 @@ Same seven graded progress photos as make_day1.py, but each stage is painted on
 over the last one with back-and-forth brush strokes, the painting runs the full
 width of the frame, and the title writes itself on by hand.
 
-Usage:  python3 make_day1_brush.py            # renders output/day1_brush.mp4 + output/day1_brush_cover.jpg
-        python3 make_day1_brush.py --preview  # writes a few stills to output/preview/
+Usage:  python3 make_day1_brush.py                  # socks page: output/day1_brush.mp4 + cover
+        python3 make_day1_brush.py --set fireplace  # fireplace page: output/fireplace_day1_brush.mp4 + cover
+        python3 make_day1_brush.py --preview        # writes a few stills to output/preview/
 """
 import math
 import os
@@ -16,8 +17,8 @@ import sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
-from make_day1 import (BUTTER, CREAM, OUT, PLUM, SNOW, STAGES, H, W, background,
-                       caveat, cover, grade, heart, learn_grade, load_crop)
+import make_day1 as d1
+from make_day1 import CREAM, OUT, SNOW, H, W, caveat, cover, grade, heart, learn_grade, load_crop
 
 FPS = 30
 SIZE = W                 # painting is full width, square
@@ -100,8 +101,8 @@ def title_parts():
         d = ImageDraw.Draw(lay)
         w = d.textlength(text, font=font)
         x0 = (W - w) / 2
-        d.text((x0 + 4, y + 5), text, font=font, fill=PLUM + (90,))   # soft drop
-        d.text((x0, y), text, font=font, fill=SNOW, stroke_width=4, stroke_fill=PLUM)
+        d.text((x0 + 4, y + 5), text, font=font, fill=d1.PLUM + (90,))   # soft drop
+        d.text((x0, y), text, font=font, fill=SNOW, stroke_width=4, stroke_fill=d1.PLUM)
         layers.append((lay, x0, x0 + w))
     return layers
 
@@ -133,10 +134,10 @@ def swash(p):
     for x in np.arange(x0, xe, 4):
         y = 100 + math.sin((x - x0) / 60) * 6
         r = 58 + rng.uniform(-4, 4)
-        d.ellipse((x - 36, y - r, x + 36, y + r), fill=BUTTER + (255,))
+        d.ellipse((x - 36, y - r, x + 36, y + r), fill=d1.SWASH + (255,))
     for _ in range(26):  # dry bristle streaks at the ends
         yy = 100 + rng.uniform(-55, 55)
-        d.line((x0 - rng.uniform(0, 30), yy, x0 + 20, yy), fill=BUTTER + (200,), width=3)
+        d.line((x0 - rng.uniform(0, 30), yy, x0 + 20, yy), fill=d1.SWASH + (200,), width=3)
     return lay
 
 
@@ -147,22 +148,22 @@ class Renderer:
         look = learn_grade()
         big = int(SIZE * 1.06)
         self.cards = []
-        for i, (name, box) in enumerate(STAGES):
+        for i, (name, box) in enumerate(d1.STAGES):
             im = load_crop(name, box)
-            if i < len(STAGES) - 1:
+            if i < len(d1.STAGES) - 1:
                 im = grade(im, look)
             self.cards.append(cover(im, big))
-        self.brushes = [BrushPath(10 + i) for i in range(len(STAGES))]
+        self.brushes = [BrushPath(10 + i) for i in range(len(d1.STAGES))]
         self.texture = dry_brush(5)
-        self.bg = background().convert("RGBA")
+        self.bg = d1.background().convert("RGBA")
         # cream "paper" strip the painting sits on, slightly torn look via blur edge
         self.title = title_parts()
         self.day_font = caveat(150)
         self.starts = []
         t = INTRO
-        for i in range(len(STAGES)):
+        for i in range(len(d1.STAGES)):
             self.starts.append(t)
-            t += BRUSH + (HOLD if i < len(STAGES) - 1 else FINAL_HOLD)
+            t += BRUSH + (HOLD if i < len(d1.STAGES) - 1 else FINAL_HOLD)
         self.duration = t
         self.base = self.bg.copy()
         paper = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -174,12 +175,12 @@ class Renderer:
     def stage_img(self, i, t):
         """Stage i with a slow push-in from the moment it starts being painted."""
         p = ease((t - self.starts[i]) / (BRUSH + HOLD + BRUSH))
-        if i == len(STAGES) - 1:
+        if i == len(d1.STAGES) - 1:
             p = ease((t - self.starts[i]) / (BRUSH + FINAL_HOLD))
         big = self.cards[i]
         n = big.size[0]
         crop = int(n - (n - SIZE * 0.96) * p)
-        if i == len(STAGES) - 1:   # the finished page eases out to show all of it
+        if i == len(d1.STAGES) - 1:   # the finished page eases out to show all of it
             crop = int(SIZE * 0.98 + (n - SIZE * 0.98) * p)
         off = (n - crop) // 2
         return big.crop((off, off, off + crop, off + crop)).resize((SIZE, SIZE), Image.LANCZOS)
@@ -217,7 +218,7 @@ class Renderer:
                 txt = Image.new("RGBA", (W, 200), (0, 0, 0, 0))
                 td = ImageDraw.Draw(txt)
                 tw = td.textlength("Day 1", font=self.day_font)
-                td.text(((W - tw) / 2, 0), "Day 1", font=self.day_font, fill=PLUM + (a,))
+                td.text(((W - tw) / 2, 0), "Day 1", font=self.day_font, fill=d1.SWASH_TEXT + (a,))
                 img.alpha_composite(txt, (0, 352))
                 for cx in (275, W - 275):
                     heart(d, cx, 457, 18, (196, 52, 62)) if a > 128 else None
@@ -226,16 +227,16 @@ class Renderer:
         if cur:
             d = ImageDraw.Draw(img)
             f = caveat(84)
-            label = "finished!" if cur == len(STAGES) and t > self.starts[-1] + BRUSH else f"stage {cur} of {len(STAGES)}"
+            label = "finished!" if cur == len(d1.STAGES) and t > self.starts[-1] + BRUSH else f"stage {cur} of {len(d1.STAGES)}"
             tw = d.textlength(label, font=f)
             d.text(((W - tw) / 2, TOP + SIZE + 64), label, font=f, fill=SNOW,
-                   stroke_width=3, stroke_fill=PLUM)
+                   stroke_width=3, stroke_fill=d1.PLUM)
         return img.convert("RGB")
 
 
 def render():
     r = Renderer()
-    path = os.path.join(OUT, "day1_brush.mp4")
+    path = os.path.join(OUT, f"{d1.PREFIX}_brush.mp4")
     frames = int(r.duration * FPS)
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
@@ -247,7 +248,7 @@ def render():
         proc.stdin.write(r.frame(f / FPS).tobytes())
     proc.stdin.close()
     proc.wait()
-    r.frame(r.duration - 0.5).save(os.path.join(OUT, "day1_brush_cover.jpg"), quality=92)
+    r.frame(r.duration - 0.5).save(os.path.join(OUT, f"{d1.PREFIX}_brush_cover.jpg"), quality=92)
     print(f"wrote {path} ({frames / FPS:.1f}s)")
 
 
@@ -256,9 +257,10 @@ def preview():
     d = os.path.join(OUT, "preview")
     os.makedirs(d, exist_ok=True)
     for t in [0.5, 1.4, 2.2, 3.4, 8.9, r.duration - 0.5]:
-        r.frame(t).save(os.path.join(d, f"brush_{t:05.1f}.jpg"), quality=88)
+        r.frame(t).save(os.path.join(d, f"{d1.PREFIX}_brush_{t:05.1f}.jpg"), quality=88)
     print("previews in", d)
 
 
 if __name__ == "__main__":
+    d1.use_set(d1.set_from_argv())
     preview() if "--preview" in sys.argv else render()

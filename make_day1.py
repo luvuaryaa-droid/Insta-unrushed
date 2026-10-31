@@ -7,8 +7,9 @@ the same colour grade as the edited final picture (stage7): the grade is learned
 by matching the colour distribution of the unedited finished photo (stage6) to
 the edited one, so the early stages carry that same warm, saturated look.
 
-Usage:  python3 make_day1.py            # renders output/day1_progress.mp4 + output/day1_cover.jpg
-        python3 make_day1.py --preview  # writes a few stills to output/preview/
+Usage:  python3 make_day1.py                  # socks page: output/day1_progress.mp4 + output/day1_cover.jpg
+        python3 make_day1.py --set fireplace  # fireplace page: output/fireplace_day1_progress.mp4 + cover
+        python3 make_day1.py --preview        # writes a few stills to output/preview/
 """
 import math
 import os
@@ -28,21 +29,71 @@ FPS = 30
 
 # Colours picked from the graded final painting
 LAVENDER = (166, 128, 222)
-PLUM = (74, 30, 72)
 BUTTER = (247, 214, 120)
 SNOW = (250, 244, 236)
 CREAM = (252, 240, 214)
 
-# (file, crop box as fractions l, t, r, b) - crops trim desk/table edges
-STAGES = [
-    ("stage1.jpg", (0.00, 0.12, 0.92, 0.95)),
-    ("stage2.jpg", (0.02, 0.30, 0.93, 0.92)),
-    ("stage3.jpg", (0.02, 0.24, 0.94, 1.00)),
-    ("stage4.jpg", (0.02, 0.03, 0.92, 0.97)),
-    ("stage5.jpg", (0.05, 0.05, 0.97, 0.97)),
-    ("stage6.jpg", (0.03, 0.02, 0.92, 0.99)),
-    ("stage7.jpg", (0.05, 0.05, 0.95, 0.95)),
-]
+# Photo sets. Each stage is (file, crop box as fractions l, t, r, b); crops trim
+# desk/table edges. The last stage is the edited final picture; `raw` is the same
+# page unedited, and the pair sets how strong the colour grade is.
+SETS = {
+    "socks": {
+        "src": "day1",
+        "prefix": "day1",
+        "stages": [
+            ("stage1.jpg", (0.00, 0.12, 0.92, 0.95)),
+            ("stage2.jpg", (0.02, 0.30, 0.93, 0.92)),
+            ("stage3.jpg", (0.02, 0.24, 0.94, 1.00)),
+            ("stage4.jpg", (0.02, 0.03, 0.92, 0.97)),
+            ("stage5.jpg", (0.05, 0.05, 0.97, 0.97)),
+            ("stage6.jpg", (0.03, 0.02, 0.92, 0.99)),
+            ("stage7.jpg", (0.05, 0.05, 0.95, 0.95)),
+        ],
+        "raw": ("stage6.jpg", (0.03, 0.02, 0.92, 0.99)),
+        "ref": ("stage7.jpg", (0.06, 0.06, 0.94, 0.94)),
+        "background": "lavender",
+        "ink": (74, 30, 72),            # plum
+        "swash": (247, 214, 120),       # butter
+        "swash_text": (74, 30, 72),
+    },
+    "fireplace": {
+        "src": "day1_fireplace",
+        "prefix": "fireplace_day1",
+        "stages": [
+            ("stage1.jpg", (0.02, 0.02, 0.98, 0.98)),
+            ("stage2.jpg", (0.02, 0.02, 0.97, 0.98)),
+            ("stage3.jpg", (0.04, 0.08, 0.99, 1.00)),
+            ("stage4.jpg", (0.19, 0.15, 0.90, 0.70)),
+            ("stage5.jpg", (0.17, 0.20, 0.87, 0.72)),
+            ("stage6.jpg", (0.05, 0.16, 0.95, 0.80)),
+            ("stage7.jpg", (0.00, 0.00, 0.97, 1.00)),
+            ("stage8.jpg", (0.03, 0.03, 0.97, 0.97)),
+        ],
+        "raw": ("stage7.jpg", (0.00, 0.00, 0.97, 1.00)),
+        "ref": ("stage8.jpg", (0.03, 0.03, 0.97, 0.97)),
+        "background": "room",
+        "ink": (92, 36, 24),            # dark wood brown
+        "swash": (178, 36, 40),         # rug-apple red
+        "swash_text": (252, 240, 214),
+    },
+}
+
+
+def use_set(name):
+    """Point the module's photo set, colours and output names at SETS[name]."""
+    global SRC, STAGES, RAW, REF, BACKGROUND, PLUM, SWASH, SWASH_TEXT, PREFIX
+    cfg = SETS[name]
+    SRC = os.path.join(ROOT, "artworks", cfg["src"])
+    STAGES, RAW, REF = cfg["stages"], cfg["raw"], cfg["ref"]
+    BACKGROUND, PLUM = cfg["background"], cfg["ink"]
+    SWASH, SWASH_TEXT, PREFIX = cfg["swash"], cfg["swash_text"], cfg["prefix"]
+
+
+def set_from_argv():
+    return sys.argv[sys.argv.index("--set") + 1] if "--set" in sys.argv else "socks"
+
+
+use_set("socks")
 
 CARD = 940          # painting card size (square)
 HOLD = 1.9          # seconds each progress stage is fully visible
@@ -61,8 +112,8 @@ def caveat(size, weight="Bold"):
 
 def learn_grade():
     """Strength of the final edit, measured from the unedited vs edited finished page."""
-    raw = np.asarray(load_crop("stage6.jpg", (0.03, 0.02, 0.92, 0.99))).astype(np.float32)
-    ref = np.asarray(load_crop("stage7.jpg", (0.06, 0.06, 0.94, 0.94))).astype(np.float32)
+    raw = np.asarray(load_crop(*RAW)).astype(np.float32)
+    ref = np.asarray(load_crop(*REF)).astype(np.float32)
 
     def chroma(a):
         return (a.max(2) - a.min(2)).mean()
@@ -134,6 +185,34 @@ def build_cards(look):
 # --------------------------------------------------------------------------- background + title
 
 def background():
+    return room_background() if BACKGROUND == "room" else lavender_background()
+
+
+def room_background():
+    """Mustard wall with white marker stripes over a wooden floor, like the fireplace page."""
+    rng = np.random.default_rng(7)
+    wall = np.empty((H, W, 3), np.float32)
+    wall[:] = (242, 172, 52)
+    blot = rng.normal(0, 1, (H // 40 + 2, W // 40 + 2)).astype(np.float32)
+    wall += np.array(Image.fromarray(blot).resize((W, H), Image.BICUBIC))[..., None] * 7
+    wall += rng.normal(0, 3, (H, W, 1))
+    bg = Image.fromarray(np.clip(wall, 0, 255).astype(np.uint8))
+    d = ImageDraw.Draw(bg)
+    x = rng.uniform(10, 40)
+    while x < W:
+        w = rng.uniform(7, 12)
+        d.line((x, 0, x + rng.uniform(-6, 6), H), fill=(255, 248, 232), width=int(w))
+        x += rng.uniform(72, 96)
+    floor_y = int(H * 0.83)
+    d.rectangle((0, floor_y, W, H), fill=(166, 112, 80))
+    for k in range(-6, 14):   # boards fanning out towards the viewer
+        x0 = W / 2 + k * 70 - 3 * 70
+        d.line((x0, floor_y, W / 2 + (x0 - W / 2) * 2.6, H), fill=(98, 52, 30), width=6)
+    d.line((0, floor_y, W, floor_y), fill=(98, 52, 30), width=8)
+    return bg
+
+
+def lavender_background():
     rng = np.random.default_rng(7)
     base = np.empty((H, W, 3), np.float32)
     base[:] = LAVENDER
@@ -309,7 +388,7 @@ class Renderer:
 def render():
     r = Renderer()
     os.makedirs(OUT, exist_ok=True)
-    path = os.path.join(OUT, "day1_progress.mp4")
+    path = os.path.join(OUT, f"{PREFIX}_progress.mp4")
     frames = int(r.duration * FPS)
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
@@ -321,7 +400,7 @@ def render():
         proc.stdin.write(r.frame(f / FPS).tobytes())
     proc.stdin.close()
     proc.wait()
-    r.frame(r.duration - 0.5).save(os.path.join(OUT, "day1_cover.jpg"), quality=92)
+    r.frame(r.duration - 0.5).save(os.path.join(OUT, f"{PREFIX}_cover.jpg"), quality=92)
     print(f"wrote {path} ({frames / FPS:.1f}s)")
 
 
@@ -330,9 +409,10 @@ def preview():
     d = os.path.join(OUT, "preview")
     os.makedirs(d, exist_ok=True)
     for t in [0.4, 1.2, 3.0, 5.6, 10.0, r.duration - 0.5]:
-        r.frame(t).save(os.path.join(d, f"day1_{t:05.1f}.jpg"), quality=88)
+        r.frame(t).save(os.path.join(d, f"{PREFIX}_{t:05.1f}.jpg"), quality=88)
     print("previews in", d)
 
 
 if __name__ == "__main__":
+    use_set(set_from_argv())
     preview() if "--preview" in sys.argv else render()
