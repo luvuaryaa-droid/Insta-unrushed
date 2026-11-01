@@ -36,3 +36,7 @@ Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), al
 - `before_after.jpg`: contact sheet comparing each photo before and after.
 
 `python3 color_correct.py` re-runs it. The script white-balances each photo on the paper, sets the ink black and paper white to match the final, then matches saturation hue by hue (reds to reds, greens to greens).
+
+### Day 1 reel
+
+`make_day1_reel.py` → `output/day1_self_portrait_reel.mp4` (1080×1920, 26.6 s, 30 fps, silent audio track so you can add music in Instagram). It opens on the finished piece, then plays every stage from the first line to the final, with hand-lettered captions and progress dots. The cover frame is `output/day1_cover.jpg` and the post caption is `output/day1_instagram_caption.txt`. Captions, timings and per-photo crops are in `STEPS` and `CROPS` at the top of the script.
