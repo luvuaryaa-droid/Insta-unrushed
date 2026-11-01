@@ -9,6 +9,8 @@ hand-lettered (Permanent Marker / Caveat). It has a silent audio track, so you
 can add music in Instagram.
 
 Usage:  python3 make_day1_reel.py                 # renders output/day1_self_portrait_reel.mp4
+        python3 make_day1_reel.py --landscape     # 1920x1080 -> output/day1_self_portrait_landscape.mp4
+                                                  # (--landscape also works with --preview)
         python3 make_day1_reel.py --crops         # contact sheet of the crops -> output/preview/
         python3 make_day1_reel.py --preview 1 9.5 # stills at the given seconds -> output/preview/
 """
@@ -26,7 +28,9 @@ FONTS = os.path.join(ROOT, "fonts")
 OUT = os.path.join(ROOT, "output")
 PREVIEW = os.path.join(OUT, "preview")
 
-W, H = 1080, 1920
+LANDSCAPE = "--landscape" in sys.argv
+SUFFIX = "_landscape" if LANDSCAPE else ""
+W, H = (1920, 1080) if LANDSCAPE else (1080, 1920)
 FPS = 30
 
 PAPER = (247, 243, 236)
@@ -36,8 +40,20 @@ TEAL = (22, 120, 130)        # mosaic teal
 PURPLE = (130, 80, 190)      # hair purple
 
 # Print layout: photo window (4:5) with a white mount around it.
-PH_W, PH_H = 900, 1125
-PH_X, PH_Y = (W - PH_W) // 2, 330
+if LANDSCAPE:
+    # print on the left, text column on the right
+    PH_W, PH_H = 760, 950
+    PH_X, PH_Y = 170, (H - PH_H) // 2
+    TX = (PH_X + PH_W + 22 + W) // 2          # centre of the text column
+    POS = dict(title1=250, title2=345, stamp=540, sub=625, dots=395, day_small=430, cap=520,
+               out_day=290, out1=450, out2=545, out3=700)
+else:
+    PH_W, PH_H = 900, 1125
+    PH_X, PH_Y = (W - PH_W) // 2, 330
+    TX = W // 2
+    below = PH_Y + PH_H
+    POS = dict(title1=78, title2=170, stamp=below + 100, sub=below + 150, dots=160, day_small=200,
+               cap=below + 70, out_day=110, out1=below + 55, out2=below + 150, out3=185)
 MOUNT = 22
 CROP_SCALE = 1.08            # crops are made this much bigger, for the push-in
 
@@ -266,7 +282,7 @@ def paste_alpha(canvas, layer, xy, alpha=1.0):
 
 
 def centered(layer, y, dx=0):
-    return ((W - layer.width) // 2 + dx, y)
+    return (TX - layer.width // 2 + dx, y)
 
 
 def photo_frame(name, local_t, hold):
@@ -319,29 +335,29 @@ def render(frame):
     # ---- header
     if t < INTRO:
         k1, k2 = ease_out((t - 0.15) / 0.5), ease_out((t - 0.4) / 0.5)
-        paste_alpha(canvas, ASSETS["title1"], centered(ASSETS["title1"], 78 + 30 * (1 - k1)), k1)
-        paste_alpha(canvas, ASSETS["title2"], centered(ASSETS["title2"], 170 + 30 * (1 - k2)), k2)
+        paste_alpha(canvas, ASSETS["title1"], centered(ASSETS["title1"], POS["title1"] + 30 * (1 - k1)), k1)
+        paste_alpha(canvas, ASSETS["title2"], centered(ASSETS["title2"], POS["title2"] + 30 * (1 - k2)), k2)
         kd = ease_out((t - 0.8) / 0.4)
         day = ASSETS["day"].rotate(-6 + 0 * kd, expand=True, resample=Image.BICUBIC)
         sc = 1.6 - 0.6 * kd
         if kd > 0:
             day = day.resize((int(day.width * sc), int(day.height * sc)), Image.BICUBIC)
-            paste_alpha(canvas, day, (W // 2 - day.width // 2, PH_Y + PH_H + 60 - day.height // 2 + 40), kd)
+            paste_alpha(canvas, day, (TX - day.width // 2, POS["stamp"] - day.height // 2), kd)
         ks = ease_out((t - 1.1) / 0.5)
-        paste_alpha(canvas, ASSETS["sub"], centered(ASSETS["sub"], PH_Y + PH_H + 150), ks)
+        paste_alpha(canvas, ASSETS["sub"], centered(ASSETS["sub"], POS["sub"]), ks)
     elif t < tl.duration - OUTRO:
         k = ease_out((t - INTRO) / 0.5)
-        paste_alpha(canvas, ASSETS["day_small"], centered(ASSETS["day_small"], 200 - 20 * (1 - k)), k)
+        paste_alpha(canvas, ASSETS["day_small"], centered(ASSETS["day_small"], POS["day_small"] - 20 * (1 - k)), k)
         # progress dots
         i = tl.shot_at(t)
         stages = list(dict.fromkeys(sh[2].split(":")[0] for sh in tl.shots))
         i = stages.index(tl.shots[i][2].split(":")[0])
         n = len(stages)
         gap = 46
-        x0 = W // 2 - (n - 1) * gap // 2
+        x0 = TX - (n - 1) * gap // 2
         d = ImageDraw.Draw(canvas)
         for j in range(n):
-            x, y = x0 + j * gap, 160
+            x, y = x0 + j * gap, POS["dots"]
             r = 9 if j <= i else 7
             col = RED if j <= i else (205, 198, 190)
             if k > 0:
@@ -355,7 +371,7 @@ def render(frame):
         layer = ASSETS["caps"].get(cap)
         kin = ease_out((t - cs) / 0.35)
         kout = 1 - ease_in_out((t - (tl.duration - OUTRO)) / 0.3) if t >= tl.duration - OUTRO else 1
-        y = PH_Y + PH_H + 70 + 30 * (1 - kin)
+        y = POS["cap"] + 30 * (1 - kin)
         if layer is not None:
             paste_alpha(canvas, layer, centered(layer, y), kin * kout)
         if cap == "me.":
@@ -363,16 +379,16 @@ def render(frame):
             ul = ASSETS["underline"]
             if ku > 0:
                 part = ul.crop((0, 0, max(1, int(ul.width * ku)), ul.height))
-                paste_alpha(canvas, part, ((W - ul.width) // 2, y + layer.height - 18), kout)
+                paste_alpha(canvas, part, (TX - ul.width // 2, y + layer.height - 18), kout)
 
     # ---- outro: text over the finished print
     if t >= tl.duration - OUTRO:
         lt = t - (tl.duration - OUTRO)
         k1, k2, k3 = (ease_out((lt - d) / 0.5) for d in (0.2, 0.5, 0.9))
-        paste_alpha(canvas, ASSETS["outro1"], centered(ASSETS["outro1"], PH_Y + PH_H + 55 + 25 * (1 - k1)), k1)
-        paste_alpha(canvas, ASSETS["outro2"], centered(ASSETS["outro2"], PH_Y + PH_H + 150 + 25 * (1 - k2)), k2)
-        paste_alpha(canvas, ASSETS["outro3"], centered(ASSETS["outro3"], 185 + 20 * (1 - k3)), k3)
-        paste_alpha(canvas, ASSETS["day_small"], centered(ASSETS["day_small"], 110), 1.0)
+        paste_alpha(canvas, ASSETS["outro1"], centered(ASSETS["outro1"], POS["out1"] + 25 * (1 - k1)), k1)
+        paste_alpha(canvas, ASSETS["outro2"], centered(ASSETS["outro2"], POS["out2"] + 25 * (1 - k2)), k2)
+        paste_alpha(canvas, ASSETS["outro3"], centered(ASSETS["outro3"], POS["out3"] + 20 * (1 - k3)), k3)
+        paste_alpha(canvas, ASSETS["day_small"], centered(ASSETS["day_small"], POS["out_day"]), 1.0)
 
     return np.asarray(canvas.convert("RGB")).tobytes()
 
@@ -403,12 +419,12 @@ def main():
                 [0.3, 1.5, 2.9, 5, 9, 13.5, 18, 21.5, 24, tl.duration - 1]
         for ts in times:
             Image.frombytes("RGB", (W, H), render(int(ts * FPS))).save(
-                os.path.join(PREVIEW, f"day1_t{ts:05.2f}.jpg"), quality=88)
+                os.path.join(PREVIEW, f"day1{SUFFIX}_t{ts:05.2f}.jpg"), quality=88)
         print("previews in", PREVIEW)
         return
     os.makedirs(OUT, exist_ok=True)
     n = int(round(tl.duration * FPS))
-    out = os.path.join(OUT, "day1_self_portrait_reel.mp4")
+    out = os.path.join(OUT, "day1_self_portrait_landscape.mp4" if LANDSCAPE else "day1_self_portrait_reel.mp4")
     if os.path.exists(VOICEOVER):
         # voice-over, levelled for Instagram (-14 LUFS) with a short fade at the end
         audio_in = ["-i", VOICEOVER]
@@ -431,7 +447,7 @@ def main():
     proc.stdin.close()
     proc.wait()
     Image.frombytes("RGB", (W, H), render(int(1.6 * FPS))).save(
-        os.path.join(OUT, "day1_cover.jpg"), quality=92)
+        os.path.join(OUT, f"day1{SUFFIX}_cover.jpg"), quality=92)
     print(f"wrote {out} ({tl.duration:.1f}s)")
 
 

@@ -40,3 +40,5 @@ Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), al
 ### Day 1 reel
 
 `make_day1_reel.py` → `output/day1_self_portrait_reel.mp4` (1080×1920, 111 s, 30 fps). It carries your voice-over (`day1_self_portrait/voiceover.m4a`), levelled to −14 LUFS for Instagram. The reel opens on the finished piece, plays every stage from the first line to the final with hand-lettered captions and progress dots, then shows close-ups of the finished painting before the outro. Each section starts on a pause in the voice-over (about 5, 12, 34, 49 and 68 s). The cover frame is `output/day1_cover.jpg` and the post caption is `output/day1_instagram_caption.txt`. Captions, timings and per-photo crops are in `STEPS` and `CROPS` at the top of the script. If the voice-over file is missing, the reel gets a silent track instead.
+
+There's also a horizontal version: `python3 make_day1_reel.py --landscape` → `output/day1_self_portrait_landscape.mp4` (1920×1080, 111 s, same voice-over and timing). The painting sits on the left and the title, captions and progress dots are on the right. Its cover is `output/day1_landscape_cover.jpg`.
