@@ -10,7 +10,8 @@ can add music in Instagram.
 
 Usage:  python3 make_day1_reel.py                 # renders output/day1_self_portrait_reel.mp4
         python3 make_day1_reel.py --landscape     # 1920x1080 -> output/day1_self_portrait_landscape.mp4
-                                                  # (--landscape also works with --preview)
+        python3 make_day1_reel.py --landscape --no-captions   # no on-screen text, print centred
+                                                  # (both flags also work with --preview)
         python3 make_day1_reel.py --crops         # contact sheet of the crops -> output/preview/
         python3 make_day1_reel.py --preview 1 9.5 # stills at the given seconds -> output/preview/
 """
@@ -29,7 +30,8 @@ OUT = os.path.join(ROOT, "output")
 PREVIEW = os.path.join(OUT, "preview")
 
 LANDSCAPE = "--landscape" in sys.argv
-SUFFIX = "_landscape" if LANDSCAPE else ""
+NO_TEXT = "--no-captions" in sys.argv     # picture and voice-over only, no on-screen text
+SUFFIX = ("_landscape" if LANDSCAPE else "") + ("_nocaptions" if NO_TEXT else "")
 W, H = (1920, 1080) if LANDSCAPE else (1080, 1920)
 FPS = 30
 
@@ -43,7 +45,7 @@ PURPLE = (130, 80, 190)      # hair purple
 if LANDSCAPE:
     # print on the left, text column on the right
     PH_W, PH_H = 760, 950
-    PH_X, PH_Y = 170, (H - PH_H) // 2
+    PH_X, PH_Y = ((W - PH_W) // 2 if NO_TEXT else 170), (H - PH_H) // 2
     TX = (PH_X + PH_W + 22 + W) // 2          # centre of the text column
     POS = dict(title1=250, title2=345, stamp=540, sub=625, dots=395, day_small=430, cap=520,
                out_day=290, out1=450, out2=545, out3=700)
@@ -332,6 +334,9 @@ def render(frame):
             img = Image.blend(Image.new("RGB", img.size, "white"), img, ease_in_out((t - a) / 0.3))
         canvas.paste(img, (PH_X, PH_Y))
 
+    if NO_TEXT:
+        return np.asarray(canvas.convert("RGB")).tobytes()
+
     # ---- header
     if t < INTRO:
         k1, k2 = ease_out((t - 0.15) / 0.5), ease_out((t - 0.4) / 0.5)
@@ -424,7 +429,7 @@ def main():
         return
     os.makedirs(OUT, exist_ok=True)
     n = int(round(tl.duration * FPS))
-    out = os.path.join(OUT, "day1_self_portrait_landscape.mp4" if LANDSCAPE else "day1_self_portrait_reel.mp4")
+    out = os.path.join(OUT, f"day1_self_portrait{SUFFIX or '_reel'}.mp4")
     if os.path.exists(VOICEOVER):
         # voice-over, levelled for Instagram (-14 LUFS) with a short fade at the end
         audio_in = ["-i", VOICEOVER]
