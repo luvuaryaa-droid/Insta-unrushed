@@ -25,3 +25,14 @@ python3 make_video.py --preview 3 20  # stills at the given seconds -> output/pr
 The story, captions, colours and timings are all in `build()` in `make_video.py`.
 
 Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), all from Google Fonts.
+
+## Painting My Way Back to Myself, Day 1 (self portrait)
+
+`day1_self_portrait/` holds the 17 progress shots, colour-corrected so they match the final scan (`raw/17.jpg`).
+
+- `raw/`: the original photos in order (01 is the line drawing, 17 is the finished piece).
+- `corrected/`: full-resolution colour-corrected photos with the original framing.
+- `instagram/`: 1080×1350 (4:5) carousel slides.
+- `before_after.jpg`: contact sheet comparing each photo before and after.
+
+`python3 color_correct.py` re-runs it. The script white-balances each photo on the paper, sets the ink black and paper white to match the final, then matches saturation hue by hue (reds to reds, greens to greens).
