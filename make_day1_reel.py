@@ -44,6 +44,7 @@ CROP_SCALE = 1.08            # crops are made this much bigger, for the push-in
 # Artwork crop per photo: (centre x, centre y, width) in the coordinates of the
 # photo scaled to DISP_W wide. Height follows from the 4:5 window.
 DISP_W = {"09": 1500, "15": 1424, "16": 1692, "17": 1692}
+VOICEOVER = os.path.join(ROOT, "day1_self_portrait", "voiceover.m4a")
 CROPS = {
     "01": (625, 940, 1000), "02": (630, 1025, 1000), "03": (675, 965, 900),
     "04": (700, 895, 880), "05": (757, 975, 900), "06": (690, 895, 1050),
@@ -51,32 +52,46 @@ CROPS = {
     "10": (690, 900, 1040), "11": (740, 850, 1450), "12": (760, 870, 1340),
     "13": (825, 800, 1330), "14": (815, 800, 1350), "15": (725, 900, 1240),
     "16": (857, 1005, 1330), "17": (848, 1020, 1300),
+    # close-ups of the finished piece for the voice-over's closing section
+    "17:eye": (660, 930, 620), "17:flower": (1010, 1060, 780), "17:bud": (1050, 560, 660),
+    "17:tiles": (560, 610, 660), "17:leaves": (880, 1420, 680),
 }
 
 # Timeline: (photo, hold seconds, caption). Captions persist across photos
 # until the caption text changes. 16 is skipped: it is the same finished piece
 # as 17, before editing.
-INTRO = 2.6
-XFADE = 0.35
+# Timeline, timed to the voice-over. Its pauses fall at ~5.2, 12.2, 34.2, 49.1
+# and 67.9 s, and each section of the painting starts on one of them.
+# (shot, hold seconds, caption). A caption stays up while consecutive shots
+# share it; "" shows none. "NN:part" is a close-up of photo NN (see CROPS).
+# 16 is skipped: it is the same finished piece as 17, before editing.
+INTRO = 5.2
+XFADE = 0.5
 STEPS = [
-    ("01", 1.5, "it starts with a line"),
-    ("02", 1.2, "the first red"),
-    ("03", 1.2, "a hibiscus blooms"),
-    ("04", 1.1, "a hibiscus blooms"),
-    ("05", 1.1, "a hibiscus blooms"),
-    ("06", 1.3, "leaves & a bud"),
-    ("07", 1.2, "hair, skin, glasses"),
-    ("08", 1.2, "hair, skin, glasses"),
-    ("09", 1.4, "one eye open"),
-    ("10", 1.0, "mosaic, tile by tile"),
-    ("11", 0.9, "mosaic, tile by tile"),
-    ("12", 0.9, "mosaic, tile by tile"),
-    ("13", 0.9, "mosaic, tile by tile"),
-    ("14", 1.0, "mosaic, tile by tile"),
-    ("15", 1.3, "almost there..."),
-    ("17", 4.2, "me."),
+    ("01", 3.5, "it starts with a line"),           # 5.2
+    ("02", 3.5, "the first red"),
+    ("03", 5.5, "a hibiscus blooms"),               # 12.2
+    ("04", 5.5, "a hibiscus blooms"),
+    ("05", 5.5, "a hibiscus blooms"),
+    ("06", 5.5, "leaves & a bud"),
+    ("07", 5.0, "hair, skin, glasses"),             # 34.2
+    ("08", 5.0, "hair, skin, glasses"),
+    ("09", 4.9, "one eye open"),
+    ("10", 3.8, "mosaic, tile by tile"),            # 49.1
+    ("11", 3.6, "mosaic, tile by tile"),
+    ("12", 3.6, "mosaic, tile by tile"),
+    ("13", 3.8, "mosaic, tile by tile"),
+    ("14", 4.0, "mosaic, tile by tile"),
+    ("15", 4.5, "almost there..."),                 # 67.9
+    ("17", 5.0, "me."),
+    ("17:eye", 5.0, ""),
+    ("17:flower", 5.5, ""),
+    ("17:bud", 4.5, ""),
+    ("17:tiles", 5.0, ""),
+    ("17:leaves", 4.5, ""),
+    ("17", 3.6, "me."),
 ]
-OUTRO = 2.6
+OUTRO = 5.0
 
 
 # --------------------------------------------------------------------------- fonts
@@ -109,11 +124,12 @@ def ease_in_out(x):
 
 # --------------------------------------------------------------------------- assets
 
-def crop_photo(name):
+def crop_photo(key):
+    name = key.split(":")[0]
     path = next(os.path.join(SRC, f) for f in os.listdir(SRC) if f.startswith(name + "."))
     im = Image.open(path).convert("RGB")
     s = im.width / DISP_W.get(name, 1500)
-    cx, cy, cw = (v * s for v in CROPS[name])
+    cx, cy, cw = (v * s for v in CROPS[key])
     cw *= CROP_SCALE
     ch = cw * PH_H / PH_W
     # keep the box inside the photo
@@ -183,6 +199,12 @@ class Timeline:
             t += hold
         self.reveal = self.shots[-1][0]
         self.duration = t + OUTRO
+        # stretch the last hold so the video ends with the voice-over
+        vo = voiceover_duration()
+        if vo and vo > self.duration:
+            a, b, name, cap = self.shots[-1]
+            self.shots[-1] = (a, b + vo - self.duration, name, cap)
+            self.duration = vo
 
     def shot_at(self, t):
         for i, (a, b, name, cap) in enumerate(self.shots):
@@ -198,11 +220,19 @@ class Timeline:
         return self.shots[i][0]
 
 
+def voiceover_duration():
+    if not os.path.exists(VOICEOVER):
+        return None
+    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
+                          VOICEOVER], capture_output=True, text=True).stdout
+    return float(out)
+
+
 ASSETS = {}
 
 
 def setup():
-    names = [s[0] for s in STEPS]
+    names = list(dict.fromkeys(s[0] for s in STEPS))
     with Pool(min(8, os.cpu_count())) as pool:
         crops = pool.map(crop_photo, names)
     ASSETS["photos"] = dict(zip(names, crops))
@@ -215,7 +245,7 @@ def setup():
     ASSETS["sub"] = text_layer("a self portrait", caveat(70), INK)
     caps = {}
     for _, _, cap in STEPS:
-        if cap not in caps:
+        if cap and cap not in caps:
             caps[cap] = text_layer(cap, caveat(96 if cap != "me." else 130), INK)
     ASSETS["caps"] = caps
     ASSETS["underline"] = scribble_underline(330, RED, 3)
@@ -255,7 +285,7 @@ def render(frame):
     canvas = ASSETS["bg"].copy().convert("RGBA")
 
     # ---- the print (mount + photo)
-    final_name = STEPS[-1][0]
+    final_name = "17"
     mount, mxy = ASSETS["mount"]
     if t < INTRO:
         # hook: the finished piece first, settling into place
@@ -304,7 +334,9 @@ def render(frame):
         paste_alpha(canvas, ASSETS["day_small"], centered(ASSETS["day_small"], 200 - 20 * (1 - k)), k)
         # progress dots
         i = tl.shot_at(t)
-        n = len(tl.shots)
+        stages = list(dict.fromkeys(sh[2].split(":")[0] for sh in tl.shots))
+        i = stages.index(tl.shots[i][2].split(":")[0])
+        n = len(stages)
         gap = 46
         x0 = W // 2 - (n - 1) * gap // 2
         d = ImageDraw.Draw(canvas)
@@ -320,11 +352,12 @@ def render(frame):
         i = tl.shot_at(t)
         cap = tl.shots[i][3]
         cs = tl.caption_start(i)
-        layer = ASSETS["caps"][cap]
+        layer = ASSETS["caps"].get(cap)
         kin = ease_out((t - cs) / 0.35)
         kout = 1 - ease_in_out((t - (tl.duration - OUTRO)) / 0.3) if t >= tl.duration - OUTRO else 1
         y = PH_Y + PH_H + 70 + 30 * (1 - kin)
-        paste_alpha(canvas, layer, centered(layer, y), kin * kout)
+        if layer is not None:
+            paste_alpha(canvas, layer, centered(layer, y), kin * kout)
         if cap == "me.":
             ku = clamp((t - cs - 0.4) / 0.5)
             ul = ASSETS["underline"]
@@ -376,10 +409,19 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     n = int(round(tl.duration * FPS))
     out = os.path.join(OUT, "day1_self_portrait_reel.mp4")
+    if os.path.exists(VOICEOVER):
+        # voice-over, levelled for Instagram (-14 LUFS) with a short fade at the end
+        audio_in = ["-i", VOICEOVER]
+        audio_filter = (f"loudnorm=I=-14:TP=-1.5:LRA=11,"
+                        f"afade=t=out:st={tl.duration - 0.6:.2f}:d=0.6,aresample=44100")
+    else:
+        audio_in = ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo"]
+        audio_filter = "anull"
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-           "-r", str(FPS), "-i", "-", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
+           "-r", str(FPS), "-i", "-", *audio_in, "-af", audio_filter,
            "-c:v", "libx264", "-preset", "slow", "-crf", "19", "-pix_fmt", "yuv420p",
            "-profile:v", "high", "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart", out]
+    print(" ".join(cmd[-14:]))
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     with Pool(os.cpu_count()) as pool:
         for i, buf in enumerate(pool.imap(render, range(n), chunksize=4)):
