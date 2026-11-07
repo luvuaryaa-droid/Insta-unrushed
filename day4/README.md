@@ -2,6 +2,7 @@
 
 A 36 s process reel (1080×1920, 30 fps) of the snake-plant folk painting. The ten progress photos are lined up so the board stays still, then each stage is brushed in over the last with a painterly stroke wipe and a short caption.
 
+- `output/day4_painting_1x1.mp4`: text-free square (1080×1080) version, just the painting building up (`python3 make_day4_clean.py`).
 - `output/day4_process.mp4`: the finished reel. Its audio track is silent, so you can add music in Instagram.
 - `output/cover.jpg`: cover frame.
 - `output/instagram_caption.txt`: post caption with hashtags.
