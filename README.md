@@ -40,3 +40,11 @@ A photo-animation reel (1080×1920, 29.5 s, 30 fps) made from 14 progress photos
 python3 make_diya_reel.py                  # full render
 python3 make_diya_reel.py --preview 2 9 26  # stills at the given seconds -> output/preview/
 ```
+
+## Diwali diya card: pencil-to-painting transition
+
+`output/diya_transition.mp4` (1080×1920, 33 s, 30 fps). The 14 progress photos are aligned on top of each other, so the card stays still and appears to paint itself, from the pencil sketch to the finished border. Each new layer spreads across the card like wet paint. The reel ends with a before/after slider and "Happy Diwali". Cover: `output/diya_transition_cover.jpg`.
+
+- `make_transition.py`: the renderer.
+- `artworks/diya_aligned/`: the aligned, colour-matched frames. These are already committed, so re-rendering doesn't need OpenCV.
+- `python3 make_transition.py --align`: re-runs the alignment (needs `pip install opencv-python-headless`). It uses SIFT matches between neighbouring steps, chained onto step 13.
