@@ -36,7 +36,22 @@ OUT = os.path.join(ROOT, "output")
 W, H = 1080, 1920
 FPS = 12            # stop-motion rate
 OUT_FPS = 24
-DURATION = 12.0
+DURATION = 30.0
+
+# Camera tour after the build-up: (time, centre x, centre y, zoom). Eased between keys.
+CAM_KEYS = [
+    (0.0, 540, 960, 1.0), (11.0, 540, 960, 1.035),
+    (12.4, 540, 720, 1.75), (14.8, 540, 700, 1.85),        # the glowing diya
+    (16.2, 260, 1300, 1.9), (17.8, 280, 1290, 1.95),       # left fish
+    (19.0, 540, 1390, 1.9), (20.6, 545, 1380, 1.95),       # lotus
+    (21.8, 880, 1310, 1.9), (23.2, 860, 1300, 1.95),       # right fish
+    (24.4, 895, 700, 1.8), (25.8, 880, 690, 1.85),         # right flower
+    (27.0, 540, 1640, 1.45), (28.2, 540, 1650, 1.5),       # the greeting
+    (29.4, 540, 960, 1.0), (30.0, 540, 960, 1.0),
+]
+# Hand-drawn marker circles during the close-ups: (start, end, cx, cy, rx, ry)
+MARKS = [(16.4, 17.9, 230, 1310, 200, 150), (19.2, 20.7, 540, 1385, 230, 150),
+         (22.0, 23.3, 850, 1320, 200, 150), (24.6, 25.9, 900, 690, 150, 140)]
 
 # Greeting: first word on a typewriter strip, second word as ransom-note letters
 GREETING = ["Shubh", "Deepawali"]
@@ -356,6 +371,35 @@ def jitter(frame, key, amt=1.6, rot=0.35):
     return float(r.uniform(-amt, amt)), float(r.uniform(-amt, amt)), float(r.uniform(-rot, rot))
 
 
+def camera(t):
+    for (t0, x0, y0, z0), (t1, x1, y1, z1) in zip(CAM_KEYS, CAM_KEYS[1:]):
+        if t <= t1:
+            e = ease_in_out((t - t0) / (t1 - t0)) if t1 > t0 else 1.0
+            return x0 + (x1 - x0) * e, y0 + (y1 - y0) * e, z0 + (z1 - z0) * e
+    return CAM_KEYS[-1][1:]
+
+
+def marker_circle(canvas, cx, cy, rx, ry, p, alpha, seed=0):
+    """Loose hand-drawn marker loop that draws itself on (a bit more than one turn)."""
+    p = clamp(p)
+    if p <= 0 or alpha <= 0:
+        return
+    rng = np.random.default_rng(seed)
+    start = rng.uniform(0, 2 * math.pi)
+    n = 70
+    pts = []
+    for i in range(int(n * p) + 1):
+        f = i / n
+        a = start - f * 2.25 * math.pi
+        wob = 1 + 0.06 * math.sin(f * 9 + seed) + 0.08 * f
+        pts.append((cx + rx * wob * math.cos(a), cy + ry * wob * math.sin(a)))
+    if len(pts) < 2:
+        return
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(layer).line(pts, fill=MARIGOLD + (int(245 * alpha),), width=14, joint="curve")
+    canvas.alpha_composite(layer)
+
+
 def scribble_underline(canvas, x0, x1, y, p, seed=9):
     """Hand-drawn highlighter zig-zag under the title, drawing on with progress p."""
     if p <= 0:
@@ -383,8 +427,8 @@ def render(frame):
     A = assets()
     canvas = A["bg"].copy()
 
-    # camera: slow push-in + drift (applied at the end)
-    zoom = 1.0 + 0.035 * ease_in_out(t / DURATION)
+    # camera (applied at the end)
+    cam_x, cam_y, zoom = camera(t)
 
     # grey newsprint scrap behind everything
     p = ease_out((t - 0.05) / 0.4)
@@ -505,11 +549,18 @@ def render(frame):
         put(canvas, im, cx + jx, 1740 + dy + jy - hop, rot=jr, scale=p)
     scribble_underline(canvas, W / 2 - total / 2 + 10, W / 2 + total / 2 - 10, 1840, (t - 4.0) / 0.6)
 
+    # marker circles around the element in close-up
+    for k, (a, b, mx, my, rx, ry) in enumerate(MARKS):
+        if a <= t <= b:
+            fade = 1 - clamp((t - (b - 0.25)) / 0.25)
+            marker_circle(canvas, mx, my, rx, ry, (t - a) / 0.45, fade, seed=60 + k)
+
     # camera + film finish
     img = canvas.convert("RGB")
     cw, ch = W / zoom, H / zoom
     jx, jy, _ = jitter(frame, "cam", 2.0, 0)
-    x0, y0 = (W - cw) / 2 + jx, (H - ch) / 2 + jy
+    x0 = min(max(cam_x - cw / 2 + jx, 0), W - cw)
+    y0 = min(max(cam_y - ch / 2 + jy, 0), H - ch)
     img = img.transform((W, H), Image.EXTENT, (x0, y0, x0 + cw, y0 + ch), Image.BICUBIC)
     arr = np.asarray(img).astype(np.float32)
     arr = arr * vignette()[..., None] + grain(frame // 2 % 4)[..., None]
@@ -597,7 +648,7 @@ def main():
     out = os.path.join(OUT, f"{SLUG}_collage.mp4")
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
            "-r", str(FPS), "-i", "-", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
-           "-r", str(OUT_FPS), "-c:v", "libx264", "-preset", "slow", "-crf", "19", "-pix_fmt", "yuv420p",
+           "-r", str(OUT_FPS), "-c:v", "libx264", "-preset", "slow", "-crf", "23", "-pix_fmt", "yuv420p",
            "-profile:v", "high", "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart", out]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     with Pool(os.cpu_count()) as pool:
