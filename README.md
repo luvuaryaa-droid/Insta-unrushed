@@ -49,9 +49,9 @@ python3 make_diya_reel.py --preview 2 9 26  # stills at the given seconds -> out
 - `artworks/diya_aligned/`: the aligned, colour-matched frames. These are already committed, so re-rendering doesn't need OpenCV.
 - `python3 make_transition.py --align`: re-runs the alignment (needs `pip install opencv-python-headless`). It uses SIFT matches between neighbouring steps, chained onto step 13.
 
-## Happy Deepavali: collage animation
+## Shubh Deepawali / Happy Deepavali: collage animation
 
-`output/happy_deepavali_collage.mp4` (1080×1920, 12 s, stop-motion at 12 fps). This is an explainer-style paper collage. The diya, fish, lotuses and flower vines are cut out of the finished painting and layered over torn indigo paper, a halftone sunburst and newsprint scraps. The diya slams in as black-and-white newsprint and pops into colour, the fish swim in, and the flame flickers. The only text is "Happy Deepavali", made from ransom-note letters. Cover: `output/happy_deepavali_cover.jpg`.
+`output/shubh_deepawali_collage.mp4` and `output/happy_deepavali_collage.mp4` (1080×1920, 12 s, stop-motion at 12 fps). The two videos are the same animation with a different greeting. This is an explainer-style paper collage. The diya, fish, lotuses and flower vines are cut out of the finished painting and layered over torn indigo paper, a halftone sunburst and newsprint scraps. The diya slams in as black-and-white newsprint and pops into colour, the fish swim in, and the flame flickers. The only text is the greeting, made from ransom-note letters. Covers: `output/shubh_deepawali_cover.jpg` and `output/happy_deepavali_cover.jpg`.
 
-- `make_vox_collage.py`: the renderer. `--preview 1 3 6` writes stills.
+- `make_vox_collage.py`: the renderer. By default it renders "Shubh Deepawali". For another greeting, use `--greeting Happy Deepavali`. `--preview 1 3 6` writes stills.
 - `artworks/diya_cutouts/`: the cut-out elements as transparent PNGs. These are already committed. `python3 make_vox_collage.py --cut` recreates them (needs OpenCV).

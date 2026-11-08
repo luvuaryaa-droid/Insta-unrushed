@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Happy Deepavali: an explainer-style paper collage animation made from cut-outs of the
+"""Shubh Deepawali / Happy Deepavali: an explainer-style paper collage animation made from cut-outs of the
 finished diya card.
 
 The diya, fish, lotuses and flower vines are cut out of the finished painting and get
 white scissor-cut borders and hard paper shadows. They are layered over torn indigo
 paper, a halftone sunburst and newsprint textures. The diya slams in as black-and-white
 newsprint and pops into colour, the fish swim in, and the vines and flame sway. The only
-text is "Happy Deepavali", made from ransom-note letters. Everything moves at 12 fps with
+text is the greeting ("Shubh Deepawali" by default), made from ransom-note letters. Everything moves at 12 fps with
 a small per-frame jitter, so it feels hand-animated.
 
-Usage:  python3 make_vox_collage.py                 # renders output/happy_deepavali_collage.mp4
+Usage:  python3 make_vox_collage.py                 # renders output/shubh_deepawali_collage.mp4
+        python3 make_vox_collage.py --greeting Happy Deepavali   # any two-word greeting
         python3 make_vox_collage.py --cut           # re-cut the elements (needs opencv)
         python3 make_vox_collage.py --preview 1 3 6 # stills -> output/preview/
 """
@@ -35,6 +36,12 @@ W, H = 1080, 1920
 FPS = 12            # stop-motion rate
 OUT_FPS = 24
 DURATION = 12.0
+
+# Greeting: first word on a typewriter strip, second word as ransom-note letters
+GREETING = ["Shubh", "Deepawali"]
+if "--greeting" in sys.argv:
+    GREETING = sys.argv[sys.argv.index("--greeting") + 1:sys.argv.index("--greeting") + 3]
+SLUG = "_".join(w.lower() for w in GREETING)
 
 PAPER = (238, 228, 206)
 INDIGO = (36, 52, 120)
@@ -294,10 +301,10 @@ def ransom_letters():
     papers = [(MARIGOLD, INK), (CREAM, TERRACOTTA), (TERRACOTTA, CREAM), (INK, MARIGOLD),
               (PINK, INK), (LEAF, CREAM), (CREAM, INDIGO), (SAFFRON, CREAM), (CREAM, INK)]
     out = []
-    for k, ch in enumerate("DEEPAVALI"):
+    for k, ch in enumerate(GREETING[1].upper()):
         fpath = LETTER_FONTS[(k * 3 + 1) % len(LETTER_FONTS)]
         f = font(fpath, int(rng.uniform(80, 96)))
-        bg, fg = papers[k]
+        bg, fg = papers[k % len(papers)]
         box = f.getbbox(ch)
         tw, th = box[2] - box[0], box[3] - box[1]
         w, h = int(max(tw + 26, 80)), int(th + 34 + rng.uniform(0, 12))
@@ -311,7 +318,7 @@ def ransom_letters():
 
 def happy_strip():
     f = font(os.path.join(FONTS, "SpecialElite-Regular.ttf"), 96)
-    text = "Happy"
+    text = GREETING[0]
     box = f.getbbox(text)
     w, h = box[2] - box[0] + 90, box[3] - box[1] + 56
     strip = torn_sheet(w, h, CREAM, 401, sides="lr", amp=12, grain=6)
@@ -476,7 +483,7 @@ def render(frame):
         put(canvas, A["stars"][k % len(A["stars"])], x + jx, y + jy, rot=t * 25 * (1 if k % 2 else -1) + jr,
             scale=sc * pop)
 
-    # "Happy" strip slides in, then DEEPAVALI letter by letter
+    # first word slides in on a strip, then the second word letter by letter
     p = ease_out_back((t - 2.5) / 0.4, 1.3)
     if p > 0:
         jx, jy, jr = jitter(frame, "happy")
@@ -543,7 +550,7 @@ def main():
         print("previews in", pdir)
         return
     n = int(DURATION * FPS)
-    out = os.path.join(OUT, "happy_deepavali_collage.mp4")
+    out = os.path.join(OUT, f"{SLUG}_collage.mp4")
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
            "-r", str(FPS), "-i", "-", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
            "-r", str(OUT_FPS), "-c:v", "libx264", "-preset", "slow", "-crf", "19", "-pix_fmt", "yuv420p",
@@ -556,7 +563,7 @@ def main():
                 print(f"frame {i}/{n}", flush=True)
     proc.stdin.close()
     proc.wait()
-    Image.fromarray(render(int(7.0 * FPS))).save(os.path.join(OUT, "happy_deepavali_cover.jpg"), quality=92)
+    Image.fromarray(render(int(7.0 * FPS))).save(os.path.join(OUT, f"{SLUG}_cover.jpg"), quality=92)
     print("wrote", out, f"({DURATION:.1f} s)")
 
 
