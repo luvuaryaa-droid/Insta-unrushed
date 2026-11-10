@@ -31,8 +31,8 @@ Fonts: Caveat and Special Elite (SIL OFL), and Permanent Marker (Apache 2.0), al
 A photo-animation reel (1080×1920, 29.5 s, 30 fps) made from 14 progress photos of a gouache Diwali card. Each photo becomes a printed photo with a handwritten step label. The prints are tossed onto a pile one by one, with a shutter flash and a small camera shake as each lands. At the end the finished card lifts off the pile, the flame glows, and "Happy Diwali" appears.
 
 - `output/diya_process.mp4`: the finished reel. It has a silent audio track, so you can add music in Instagram.
-- `output/diya_cover.jpg`: cover frame.
-- `output/diya_instagram_caption.txt`: post caption with hashtags.
+- `output/diya_cover.jpg`: a designed reel cover with the pencil-sketch print fanned behind the finished print. Everything sits inside the middle 3:4 area that the profile grid shows, and `output/diya_cover_grid_preview.jpg` shows that crop. `python3 make_diya_reel.py --cover` re-makes just the cover.
+- `output/diya_instagram_caption.txt`: post caption with 5 hashtags (Instagram's current limit).
 - `artworks/diya_process/`: the 14 progress photos, cropped to the card.
 - `make_diya_reel.py`: the renderer. Step labels are in `LABELS` and timings are at the top of the file.
 

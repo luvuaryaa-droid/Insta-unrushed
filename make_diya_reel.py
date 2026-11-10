@@ -7,6 +7,7 @@ flash and a small shake as each one lands. At the end the finished card lifts of
 pile and fills the screen while the flame glows and sparkles twinkle around it.
 
 Usage:  python3 make_diya_reel.py                  # renders output/diya_process.mp4
+        python3 make_diya_reel.py --cover            # just the reel cover (+ grid-crop preview)
         python3 make_diya_reel.py --preview 2 9 26  # stills at those seconds -> output/preview/
 """
 import math
@@ -428,8 +429,34 @@ def render_frame(frame):
     return render(frame / FPS).tobytes()
 
 
+def render_cover():
+    """Reel cover: the pencil-sketch print fanned behind the finished print, with the title.
+    Everything sits inside the middle 3:4 area (y 240..1680) that the profile grid shows."""
+    canvas = Image.fromarray(backdrop().astype(np.uint8)).convert("RGBA")
+    draw_bokeh(canvas, 3.0, 1.3)
+    a, b, _ = title_parts()
+    paste_center(canvas, a, W / 2 - 120, 330)
+    paste_center(canvas, b, W / 2 + 150, 465)
+    draw_print(canvas, 0, 365, 990, 10, 0.68)
+    draw_print(canvas, N - 1, 650, 1115, -5, 0.72)
+    for x, y, sz, rot in [(215, 610, 26, 10), (900, 700, 20, 30), (880, 1460, 24, 5), (170, 1430, 16, 40),
+                          (600, 560, 18, 20)]:
+        paste_center(canvas, sparkle(sz).rotate(rot, Image.BICUBIC), x, y)
+    tag = text_img("14 photos, one little card", caveat(70), CREAM, 2, INDIGO_DEEP)
+    paste_center(canvas, tag, W / 2, 1625)
+    arr = np.asarray(canvas.convert("RGB")).astype(np.float32)
+    arr += np.random.default_rng(4).normal(0, 2.5, (H, W, 1)).astype(np.float32)
+    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
+    if "--cover" in sys.argv:
+        cov = render_cover()
+        cov.save(os.path.join(OUT, "diya_cover.jpg"), quality=94)
+        cov.crop((0, 240, W, 1680)).save(os.path.join(OUT, "diya_cover_grid_preview.jpg"), quality=90)
+        print("wrote", os.path.join(OUT, "diya_cover.jpg"))
+        return
     if "--preview" in sys.argv:
         pdir = os.path.join(OUT, "preview")
         os.makedirs(pdir, exist_ok=True)
@@ -452,7 +479,7 @@ def main():
                 print(f"frame {i}/{n}", flush=True)
     proc.stdin.close()
     proc.wait()
-    Image.fromarray(render(DURATION - 1.0)).save(os.path.join(OUT, "diya_cover.jpg"), quality=92)
+    render_cover().save(os.path.join(OUT, "diya_cover.jpg"), quality=94)
     print("wrote", out, f"({DURATION:.1f} s)")
 
 
