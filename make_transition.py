@@ -11,6 +11,7 @@ card appears to paint itself in place.
    spreads across the card like brush strokes. It ends on a before/after slider.
 
 Usage:  python3 make_transition.py                 # renders output/diya_transition.mp4
+        python3 make_transition.py --cover         # just the reel cover (+ grid-crop preview)
         python3 make_transition.py --align         # redo the alignment
         python3 make_transition.py --preview 3 12  # stills -> output/preview/
 """
@@ -312,12 +313,51 @@ def render_frame(frame):
     return render(frame / FPS).tobytes()
 
 
+def render_cover():
+    """Reel cover: one card, half pencil sketch and half finished painting, split by the same
+    wet-paint edge the video uses. Everything sits inside the middle 3:4 area (y 240..1680)
+    that the profile grid shows."""
+    canvas = Image.fromarray(backdrop().astype(np.uint8)).convert("RGBA")
+    draw_bokeh(canvas, 3.0, 1.2)
+    tx = texts()
+    paste_center(canvas, tx["t1"], W / 2 - 110, 330)
+    paste_center(canvas, tx["arrow"], W / 2 + 170, 350)
+    paste_center(canvas, tx["t2"], W / 2 + 40, 465)
+
+    # left-to-right sweep (sketch on the left, painting on the right, flame painted), roughened with noise
+    yy, xx = np.mgrid[0:CARD, 0:CARD].astype(np.float32) / CARD
+    f = 0.66 * (xx + 0.12 * yy) + 0.34 * fbm(CARD, 4242)
+    f = (f - f.min()) / (f.max() - f.min())
+    m = np.clip((f - 0.31) / 0.035, 0, 1)[..., None]
+    card = stage(0) * (1 - m) + stage(N - 1) * m
+    card += ((m * (1 - m))[..., 0] * 4 * 26)[..., None]          # bright wet edge on the seam
+    size = 860
+    cy = 1035
+    cimg = Image.fromarray(np.clip(card, 0, 255).astype(np.uint8)).resize((size, size), Image.LANCZOS)
+    frame = card_frame()
+    frame = frame.resize((int(frame.width * size / CARD), int(frame.height * size / CARD)), Image.LANCZOS)
+    paste_center(canvas, frame, W / 2, cy + 7)
+    canvas.paste(cimg, (W // 2 - size // 2, cy - size // 2))
+
+    tag = text_img("watch it paint itself", caveat(74), CREAM, 2, INDIGO_DEEP)
+    paste_center(canvas, tag, W / 2, 1585)
+    arr = np.asarray(canvas.convert("RGB")).astype(np.float32)
+    arr += np.random.default_rng(4).normal(0, 2.5, (H, W, 1)).astype(np.float32)
+    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
+
+
 def main():
     if "--align" in sys.argv or not os.path.exists(os.path.join(ALIGNED, f"aligned{N:02d}.jpg")):
         align()
         if "--align" in sys.argv:
             return
     os.makedirs(OUT, exist_ok=True)
+    if "--cover" in sys.argv:
+        cov = render_cover()
+        cov.save(os.path.join(OUT, "diya_transition_cover.jpg"), quality=94)
+        cov.crop((0, 240, W, 1680)).save(os.path.join(OUT, "diya_transition_cover_grid_preview.jpg"), quality=90)
+        print("wrote", os.path.join(OUT, "diya_transition_cover.jpg"))
+        return
     if "--preview" in sys.argv:
         pdir = os.path.join(OUT, "preview")
         os.makedirs(pdir, exist_ok=True)
@@ -340,7 +380,7 @@ def main():
                 print(f"frame {i}/{n}", flush=True)
     proc.stdin.close()
     proc.wait()
-    Image.fromarray(render(T_DONE + 1.4)).save(os.path.join(OUT, "diya_transition_cover.jpg"), quality=92)
+    render_cover().save(os.path.join(OUT, "diya_transition_cover.jpg"), quality=94)
     print("wrote", out, f"({DURATION:.1f} s)")
 
 
