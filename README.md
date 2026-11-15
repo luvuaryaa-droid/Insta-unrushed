@@ -1,6 +1,10 @@
 # Insta-unrushed: weekly sketchbook tour
 
-## New: "I Am an Ocean" lyric reel
+## New: 30-second ad, "One artist. Zero boxes."
+
+`make_ad.py` → `output/ad_one_artist.mp4` (1080×1920, 30.8 s). A peppy promo cut from the choruses of the song: colour-block wipes on the beat, sticker-style artwork, slammed headlines, confetti, and a lyric caption pill. It ends on a call to action; change the wording in `CTA_BIG` / `CTA_SMALL` at the top of the script. Cover: `output/ad_cover.jpg`. Caption: `output/ad_caption.txt`. Render with `python3 make_ad.py` (~1.5 min) or `python3 make_ad.py --preview 1 20` for stills.
+
+## "I Am an Ocean" lyric reel
 
 `make_ocean.py` → `output/i_am_an_ocean.mp4` (1080×1920, 30 fps, 90 s, with the song). Sixteen paintings from `artworks/ocean/` dive from a grey surface into a deep sea, cut to the beat of `music/I_Am_an_Ocean.mp3`, with word-by-word karaoke lyrics. Cover: `output/ocean_cover.jpg`. Caption: `output/ocean_caption.txt`.
 
