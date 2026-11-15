@@ -1,5 +1,18 @@
 # Insta-unrushed: weekly sketchbook tour
 
+## New: "I Am an Ocean" lyric reel
+
+`make_ocean.py` → `output/i_am_an_ocean.mp4` (1080×1920, 30 fps, 90 s, with the song). Sixteen paintings from `artworks/ocean/` dive from a grey surface into a deep sea, cut to the beat of `music/I_Am_an_Ocean.mp3`, with word-by-word karaoke lyrics. Cover: `output/ocean_cover.jpg`. Caption: `output/ocean_caption.txt`.
+
+```
+python3 make_ocean.py                   # full render (~5 min on 4 cores)
+python3 make_ocean.py --preview 17 66   # stills -> output/preview/
+```
+
+The lyric timings, the scene order and the artwork crops are at the top of `make_ocean.py`.
+
+## Weekly sketchbook tour
+
 There are two versions of this week's reel:
 
 1. **3D flip-book** (`make_flipbook.py` → `output/sketchbook_flipbook.mp4`, 59 s, 30 fps): an open sketchbook floats in a snowy night scene and flips through the pages, with big white hand-lettered captions. To float the book over your own footage instead of the drawn scene, run `python3 make_flipbook.py --bg my_clip.mp4`.
